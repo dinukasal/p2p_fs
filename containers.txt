@@ -1,0 +1,8 @@
+total 28
+drwxrwxr-x 2 dinuka dinuka 4096 ඔක්    9 19:37 client
+-rw-rw-r-- 1 dinuka dinuka  462 ඔක්   10 12:33 containers.txt
+drwxrwxr-x 2 dinuka dinuka 4096 ඔක්   10 11:36 docker_commands
+-rw-rw-r-- 1 dinuka dinuka  303 ඔක්    9 16:55 File Names.txt
+-rw-rw-r-- 1 dinuka dinuka  605 ඔක්    9 16:55 Queries.txt
+-rw-rw-r-- 1 dinuka dinuka   87 ඔක්    9 19:35 README.md
+drwxrwxr-x 2 dinuka dinuka 4096 ඔක්    9 19:37 server
