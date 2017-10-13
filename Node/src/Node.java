@@ -34,7 +34,7 @@ public class Node{
 
                 s.receive(dp);
                 String rcvd = "rcvd from " + dp.getAddress() + ", " + dp.getPort() + ": "
-                    + new String(dp.getData(), 0, dp.getLength());
+                        + new String(dp.getData(), 0, dp.getLength());
                 System.out.println(rcvd);
             }
         }
