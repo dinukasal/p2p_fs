@@ -11,17 +11,15 @@ import java.util.StringTokenizer;
 public class BootstrapServer implements Runnable {
 
     private static Thread t1,t2;
+    DatagramSocket sock = null;
 
     public static void main(String args[]) {
         BootstrapServer bs1=new BootstrapServer();
-        t1=new Thread();
-        t2=new Thread();
 
-        t1.start();      
-        t2.start();  
         //bs1.startServer();
     }
 
+    @Override
     public void run(){
         System.out.println("server thread is running..."); 
         this.startServer();
@@ -33,16 +31,21 @@ public class BootstrapServer implements Runnable {
     }
 
     public BootstrapServer(){
+        try {            
+        sock = new DatagramSocket(55555);
+        }catch(Exception e){
+            echo("crashed..");
+        }
 
+        t1=new Thread(this);
+        t1.start();      
     }
-
+    
     public void startServer() {
-        DatagramSocket sock = null;
         String s;
         List<Neighbour> nodes = new ArrayList<Neighbour>();
 
         try {
-            sock = new DatagramSocket(55555);
 
             echo("Bootstrap Server created at 55555. Waiting for incoming data...");
 
@@ -59,8 +62,13 @@ public class BootstrapServer implements Runnable {
 
                 StringTokenizer st = new StringTokenizer(s, " ");
 
-                String length = st.nextToken();
-                String command = st.nextToken();
+                String length="",command="";
+                try{
+                    length = st.nextToken();
+                    command = st.nextToken();
+                }catch(Exception e){
+
+                }                
 
                 if (command.equals("REG")) {
                     String reply = "REGOK ";
@@ -141,8 +149,8 @@ public class BootstrapServer implements Runnable {
             }
         } catch (Exception e) {
             System.err.println("IOException " + e);
-            echo("Server crashed! restarting...");
-            // t2.start();
+            echo("\n***********************\nServer crashed! restarting...\n");
+            //this.t2.start();
             // startServer();
         }
     }
