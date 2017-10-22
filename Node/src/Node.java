@@ -9,10 +9,35 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 
-public class Node{
+public class Node implements Runnable{
+    private DatagramSocket s;
 
-    public static void main(String args[]) throws Exception{
-        DatagramSocket s=new DatagramSocket();
+    public void run(){
+        echo("thread started...");
+        try{
+
+            startNode();        
+        }catch(Exception e){
+            echo("Cannot start node!");
+        }
+    }
+
+    public static void main(String args[]) throws Exception {
+        Node n1=new Node();
+        Thread t1=new Thread(n1);
+        Thread t2=new Thread(n1);
+        t1.start();
+        t2.start();
+
+    }
+
+    //simple function to echo data to terminal
+    public void echo(String msg) {
+        System.out.println(msg);
+
+    }
+    
+    public void startNode() throws Exception{
         byte[] buf = new byte[1000];
         int port=55555;
 
@@ -44,9 +69,8 @@ public class Node{
         }
     }
 
-    //simple function to echo data to terminal
-    public static void echo(String msg)
-    {
-        System.out.println(msg);
+    public Node() throws Exception{
+        s=new DatagramSocket();
     }
+
 }

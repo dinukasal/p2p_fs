@@ -8,9 +8,35 @@ import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-public class BootstrapServer {
+public class BootstrapServer implements Runnable {
+
+    private static Thread t1,t2;
 
     public static void main(String args[]) {
+        BootstrapServer bs1=new BootstrapServer();
+        t1=new Thread();
+        t2=new Thread();
+
+        t1.start();      
+        t2.start();  
+        //bs1.startServer();
+    }
+
+    public void run(){
+        System.out.println("server thread is running..."); 
+        this.startServer();
+    }
+
+    //simple function to echo data to terminal
+    private void echo(String msg) {
+        System.out.println(msg);
+    }
+
+    public BootstrapServer(){
+
+    }
+
+    public void startServer() {
         DatagramSocket sock = null;
         String s;
         List<Neighbour> nodes = new ArrayList<Neighbour>();
@@ -113,16 +139,14 @@ public class BootstrapServer {
                 }
 
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("IOException " + e);
+            echo("Server crashed! restarting...");
+            // t2.start();
+            // startServer();
         }
     }
-
-    //simple function to echo data to terminal
-    public static void echo(String msg) {
-        System.out.println(msg);
-
-    }
+ 
 
 
 }
