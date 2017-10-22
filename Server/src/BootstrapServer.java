@@ -1,3 +1,5 @@
+package server;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -6,15 +8,44 @@ import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-public class BootstrapServer {
+public class BootstrapServer implements Runnable {
+
+    private static Thread t1,t2;
+    DatagramSocket sock = null;
 
     public static void main(String args[]) {
-        DatagramSocket sock = null;
+        BootstrapServer bs1=new BootstrapServer();
+
+        //bs1.startServer();
+    }
+
+    @Override
+    public void run(){
+        System.out.println("server thread is running..."); 
+        this.startServer();
+    }
+
+    //simple function to echo data to terminal
+    private void echo(String msg) {
+        System.out.println(msg);
+    }
+
+    public BootstrapServer(){
+        try {            
+        sock = new DatagramSocket(55555);
+        }catch(Exception e){
+            echo("crashed..");
+        }
+
+        t1=new Thread(this);
+        t1.start();      
+    }
+    
+    public void startServer() {
         String s;
         List<Neighbour> nodes = new ArrayList<Neighbour>();
 
         try {
-            sock = new DatagramSocket(55555);
 
             echo("Bootstrap Server created at 55555. Waiting for incoming data...");
 
@@ -31,8 +62,13 @@ public class BootstrapServer {
 
                 StringTokenizer st = new StringTokenizer(s, " ");
 
-                String length = st.nextToken();
-                String command = st.nextToken();
+                String length="",command="";
+                try{
+                    length = st.nextToken();
+                    command = st.nextToken();
+                }catch(Exception e){
+
+                }                
 
                 if (command.equals("REG")) {
                     String reply = "REGOK ";
@@ -111,16 +147,14 @@ public class BootstrapServer {
                 }
 
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("IOException " + e);
+            echo("\n***********************\nServer crashed! restarting...\n");
+            //this.t2.start();
+            // startServer();
         }
     }
-
-    //simple function to echo data to terminal
-    public static void echo(String msg) {
-        System.out.println(msg);
-
-    }
+ 
 
 
 }

@@ -1,3 +1,5 @@
+package server;
+
 class Neighbour{
 	private String ip;
 	private int port;
