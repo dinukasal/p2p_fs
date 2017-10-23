@@ -81,6 +81,8 @@ public class BootstrapServer implements Runnable {
                         nodes.add(new Neighbour(ip, port, username));
                     } else {
                         boolean isOkay = true;
+                        /*
+                
                         for (int i = 0; i < nodes.size(); i++) {
                             if (nodes.get(i).getPort() == port) {
                                 if (nodes.get(i).getUsername().equals(username)) {
@@ -91,6 +93,13 @@ public class BootstrapServer implements Runnable {
                                 isOkay = false;
                             }
                         }
+                        */
+
+                        /*  
+                            PORT IS SAME AS OF CURRENT NODE CODE. SO => 
+                            EDIT: CHECK IP+PORT and Username? 
+                        */
+
                         if (isOkay) {
                             if (nodes.size() == 1) {
                                 reply += "1 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort();

@@ -22,16 +22,6 @@ public class Node implements Runnable{
     InetAddress hostAddress;
     DatagramPacket dp;
 
-    public void run(){
-        echo("thread started...");
-        try{
-
-            startNode();        
-        }catch(Exception e){
-            echo("Cannot start node!");
-        }
-    }
-
     public Node() throws Exception{
         s=new DatagramSocket();
         InetAddress IP=InetAddress.getLocalHost();
@@ -39,7 +29,8 @@ public class Node implements Runnable{
         echo("IP address: "+ip_address);
         hostAddress = InetAddress.getByName(server_ip);
         dp = new DatagramPacket(buf, buf.length);
-        
+
+        List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
     }
     public void setName(String name){
         node_name=name;
@@ -51,15 +42,23 @@ public class Node implements Runnable{
         node_port=port;
     }
 
+    //simple function to echo data to terminal
+    public void echo(String msg) {
+        System.out.println(msg);
+    }
+
+
     public static void main(String args[]) throws Exception {
-        // for(String s:args){
-            
+        // for(String s:args){  
         // }
+
         Node n1=new Node();
         try{
             n1.setName(args[0]);
-            //n1.setPort((args[1]));
             n1.setIP(args[1]);
+
+            //n1.setPort( Integer.parseInt(args[1]) );
+            //n1.setIP("localhost");
 
         }catch(Exception e){
             n1.echo("Enter the arguments as `java Node <node name> <ip address>");
@@ -71,54 +70,76 @@ public class Node implements Runnable{
 
     }
 
-    //simple function to echo data to terminal
-    public void echo(String msg) {
-        System.out.println(msg);
-
-    }
-    
-    public void sendMessage(String outString){
-        buf = outString.getBytes();
-        DatagramPacket out = new DatagramPacket(buf, buf.length, hostAddress, bs_port);
+    public void run(){
+        echo("thread started...");
         try{
-            s.send(out);
-            receive();
-        }catch(Exception e){
-            echo("Send error!");
-        }
-    }
 
-    public void doReg(){
-        String reg=" REG "+ip_address+" 5001 "+node_name;
-        reg= "00"+(reg.length()+4)+ reg ;
-        echo(reg);
-        sendMessage(reg);
-    }
-
-    public void receive(){
-        try{
-            s.receive(dp);
+            startNode();
+                    
         }catch(Exception e){
-            echo("revc error!");
+            echo("Cannot start node!");
         }
-        String rcvd = "rcvd from " + dp.getAddress() + ", " + dp.getPort() + ": "
-                + new String(dp.getData(), 0, dp.getLength());
-        System.out.println(rcvd);
     }
 
     public void startNode() throws Exception{
         try{
 
-            doReg();
+            doREG();
 
             while (true) {
+
+                ////////////////////////////////////////////////////////////////////////////
                 BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
                 String outMessage = stdin.readLine();
 
                 if (outMessage.equals("bye"))
                     break;
+                sendMessage(outMessage, server_ip, Integer.toString(bs_port) );        // outMessage == UNREG?
+                ///////////////////////////////////////////////////////////////////////////
 
-                sendMessage(outMessage);
+
+                byte[] buffer = new byte[65536];
+                DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
+                s.receive(incoming);
+
+                byte[] data = incoming.getData();
+                String str = new String(data, 0, incoming.getLength());
+                echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
+
+                StringTokenizer st = new StringTokenizer(str, " ");
+                String length="",command="";
+                try{
+                    length = st.nextToken();
+                    command = st.nextToken();
+                }catch(Exception e){
+
+                }
+
+
+                if (command.equals("REGOK")) {
+
+                    int no_nodes = Integer.parseInt(st.nextToken());
+
+                    // Loop twice if no_nodes == 2
+                    while(no_nodes>0) {
+
+                        String join_ip = st.nextToken();
+                        String join_port = st.nextToken();
+
+                        // Send JOIN request => 'length JOIN IP_address port_no'
+                        String join =" JOIN "+join_ip+" "+join_port;
+                        String join_msg= "00"+(join.length()+4)+ join ;
+                        
+                        sendMessage(join_msg, join_ip, join_port);
+                        no_nodes -= 1;
+                    }
+
+                }
+                // ?????????????????
+                else if(command.equals("JOIN")){
+                    echo("JOINED");
+                    //joinedNodes.add(new Neighbour(ip, port, username));
+                }
 
 
             }
@@ -129,6 +150,37 @@ public class Node implements Runnable{
         }
     }
 
+    public void doREG(){
+        String reg=" REG "+ip_address+" " + node_port +" "+node_name; //node_port?
+        reg= "00"+(reg.length()+4)+ reg ;
+        sendMessage(reg, server_ip, Integer.toString(bs_port));
+    }
 
+    public void sendMessage(String outString, String outAddress, String outPort){
+        try{
+
+            buf = outString.getBytes();
+            DatagramPacket out = new DatagramPacket(buf, buf.length, InetAddress.getByName(outAddress), Integer.parseInt(outPort));
+        
+            System.out.println("SENDING... => " + outString);
+            s.send(out);
+            //receive();
+        }catch(Exception e){
+            echo("Send error!");
+        }
+    }
+
+    // recieveReplyMessage ?
+    public void receive(){
+        try{
+            s.receive(dp);
+        }catch(Exception e){
+            echo("revc error!");
+        }
+
+        String rcvd = "rcvd from " + dp.getAddress() + ":" + dp.getPort() + " => "
+                + new String(dp.getData(), 0, dp.getLength());
+        System.out.println(rcvd);
+    }
 
 }
