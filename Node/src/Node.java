@@ -15,7 +15,10 @@ public class Node implements Runnable{
     private String ip_address="";
     private String server_ip="localhost";
     byte[] buf = new byte[1000];
-    int port=55555;
+    int bs_port=55555;
+    int node_port=5001;
+    String node_name="n1";
+
     InetAddress hostAddress;
     DatagramPacket dp;
 
@@ -38,13 +41,33 @@ public class Node implements Runnable{
         dp = new DatagramPacket(buf, buf.length);
         
     }
+    public void setName(String name){
+        node_name=name;
+    }
+    public void setIP(String ip){
+        ip_address=ip;
+    }
+    public void setPort(int port){
+        node_port=port;
+    }
 
     public static void main(String args[]) throws Exception {
+        // for(String s:args){
+            
+        // }
         Node n1=new Node();
+        try{
+            n1.setName(args[0]);
+            //n1.setPort((args[1]));
+            n1.setIP(args[1]);
+
+        }catch(Exception e){
+            n1.echo("Enter the arguments as `java Node <node name> <ip address>");
+        }
+
         t1=new Thread(n1);
         t2=new Thread(n1);
         t1.start();
-
 
     }
 
@@ -56,7 +79,7 @@ public class Node implements Runnable{
     
     public void sendMessage(String outString){
         buf = outString.getBytes();
-        DatagramPacket out = new DatagramPacket(buf, buf.length, hostAddress, port);
+        DatagramPacket out = new DatagramPacket(buf, buf.length, hostAddress, bs_port);
         try{
             s.send(out);
             receive();
@@ -66,8 +89,8 @@ public class Node implements Runnable{
     }
 
     public void doReg(){
-        String reg=" REG 127.0.1.1 5001 cl1";
-        reg= reg.length()+2+ reg ;
+        String reg=" REG "+ip_address+" 5001 "+node_name;
+        reg= "00"+(reg.length()+4)+ reg ;
         echo(reg);
         sendMessage(reg);
     }
