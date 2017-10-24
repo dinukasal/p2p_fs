@@ -103,7 +103,21 @@ public class Node implements Runnable {
                 node2.receive(incoming);
                 byte[] data = incoming.getData();
                 String str = new String(data, 0, incoming.getLength());
-                echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
+                    echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
+
+                StringTokenizer st = new StringTokenizer(str, " ");
+                String command = "",length="";
+                length=st.nextToken();
+                command = st.nextToken();
+                echo("command: "+command);
+                
+                if(command=="JOIN"){
+                    echo("join req came");
+                    String reply=" JOINOK 0";
+                    reply="00"+(reply.length()+2)+reply;
+                    sendJoinReq(reply,ip_address,node_port);
+                }else{
+                }
             }
         } catch (Exception e) {
 
@@ -111,11 +125,11 @@ public class Node implements Runnable {
 
     }
 
-    public void sendJoinReq(String outString, String outAddress, String outPort) {
+    public void sendJoinReq(String outString, String outAddress, int outPort) {
         try {
             buf = outString.getBytes();
             DatagramPacket out = new DatagramPacket(buf, buf.length, InetAddress.getByName(outAddress),
-                    Integer.parseInt(outPort));
+                    outPort);
 
             System.out.println("SENDING... => " + outString);
             node2.send(out);
@@ -161,7 +175,7 @@ public class Node implements Runnable {
                 String join = " JOIN " + join_ip + " " + join_port;
                 String join_msg = "00" + (join.length() + 4) + join;
 
-                sendJoinReq(join_msg, join_ip, join_port);
+                sendJoinReq(join_msg, join_ip, Integer.parseInt(join_port));
                 no_nodes -= 1;
             }
 
