@@ -33,6 +33,7 @@ public class Node implements Runnable {
 
     HashMap<String, File> filesToStore = new HashMap<String, File>();
     List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
+    List<String> nodeFiles = new ArrayList<String>();
 
     static Thread joinThread;
 
@@ -43,7 +44,6 @@ public class Node implements Runnable {
         echo("IP address: " + ip_address);
         hostAddress = InetAddress.getByName(server_ip);
         dp = new DatagramPacket(buf, buf.length);
-
         //initiate files
         initializeFiles();
 
@@ -97,7 +97,9 @@ public class Node implements Runnable {
             filesToStore.put(keysAsArray.get(fileIndex), allFiles.get(keysAsArray.get(fileIndex)));
 
         }
+
         filesToStore.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
+
 
     }
 
@@ -264,7 +266,6 @@ public class Node implements Runnable {
     public static void main(String args[]) throws Exception {
 
         Node n1 = new Node();
-
         try {
             n1.setName(args[0]);
             n1.setIP(args[1]);
@@ -287,11 +288,13 @@ public class Node implements Runnable {
 
         Thread listnerThread = new Thread(new Runnable() { //thread which listens on the joining
 
+
             public void run() {
                 System.out.println("** join listener on port " + n1.getPort() + " started..");
                 n1.joinListener();
             }
         });
+
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -316,13 +319,11 @@ public class Node implements Runnable {
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         try {
             while (true) {
-
                 String outMessage = stdin.readLine();
 
                 if (outMessage.equals("bye")) {
 
                     System.exit(1);
-
                 } else if (outMessage.equals("join")) {
 
                     sendMessage("test from n1", "127.0.1.1", "5001");
@@ -372,6 +373,7 @@ public class Node implements Runnable {
     public void doREG() {
         String reg = " REG " + ip_address + " " + node_port + " " + node_name; //node_port?
         reg = "00" + (reg.length() + 4) + reg;
+
         sendMessage(reg, server_ip, Integer.toString(bs_port));
     }
 
