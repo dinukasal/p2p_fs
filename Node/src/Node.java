@@ -65,8 +65,14 @@ public class Node implements Runnable{
         }
 
         t1=new Thread(n1);
-        t2=new Thread(n1);
+        t2=new Thread(new Runnable(){
+            public void run(){
+                System.out.println("t2 started...");
+                n1.readStdin();
+            }
+        });
         t1.start();
+        t2.start();
 
     }
 
@@ -80,6 +86,21 @@ public class Node implements Runnable{
             echo("Cannot start node!");
         }
     }
+    public void readStdin(){
+        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+        try{
+            while(true){
+                String outMessage = stdin.readLine();
+                if (outMessage.equals("bye"))
+                    System.exit(1);
+                else
+                    echo("Enter valid command");
+            }
+        }catch(Exception e){
+
+        }
+
+    }
 
     public void startNode() throws Exception{
         try{
@@ -89,11 +110,7 @@ public class Node implements Runnable{
             while (true) {
 
                 ////////////////////////////////////////////////////////////////////////////
-                BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
-                String outMessage = stdin.readLine();
 
-                if (outMessage.equals("bye"))
-                    break;
                 //sendMessage(outMessage, server_ip, Integer.toString(bs_port) );        // outMessage == UNREG?
                 ///////////////////////////////////////////////////////////////////////////
 
