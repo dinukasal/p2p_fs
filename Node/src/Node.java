@@ -16,7 +16,7 @@ public class Node implements Runnable{
     private String server_ip="localhost";
     byte[] buf = new byte[1000];
     int bs_port=55555;
-    int node_port=5001;
+    int node_port=5001;  //if cli arguments 
     String node_name="n1";
 
     InetAddress hostAddress;
@@ -102,6 +102,56 @@ public class Node implements Runnable{
 
     }
 
+    public void listener(){
+
+        byte[] buffer = new byte[65536];
+        DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
+        try{
+            s.receive(incoming);
+        }catch(Exception e){
+
+        }
+
+        byte[] data = incoming.getData();
+        String str = new String(data, 0, incoming.getLength());
+        echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
+
+        StringTokenizer st = new StringTokenizer(str, " ");
+        String length="",command="";
+        try{
+            length = st.nextToken();
+            command = st.nextToken();
+        }catch(Exception e){
+
+        }
+
+
+        if (command.equals("REGOK")) {
+
+            int no_nodes = Integer.parseInt(st.nextToken());
+
+            // Loop twice if no_nodes == 2
+            while(no_nodes>0) {
+
+                String join_ip = st.nextToken();
+                String join_port = st.nextToken();
+
+                // Send JOIN request => 'length JOIN IP_address port_no'
+                String join =" JOIN "+join_ip+" "+join_port;
+                String join_msg= "00"+(join.length()+4)+ join ;
+                
+                sendMessage(join_msg, join_ip, join_port);
+                no_nodes -= 1;
+            }
+
+        }
+        // ?????????????????
+        else if(command.equals("JOIN")){
+            echo("JOINED");
+            //joinedNodes.add(new Neighbour(ip, port, username));
+        }
+    }
+
     public void startNode() throws Exception{
         try{
 
@@ -113,51 +163,7 @@ public class Node implements Runnable{
 
                 //sendMessage(outMessage, server_ip, Integer.toString(bs_port) );        // outMessage == UNREG?
                 ///////////////////////////////////////////////////////////////////////////
-
-
-                byte[] buffer = new byte[65536];
-                DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
-                s.receive(incoming);
-
-                byte[] data = incoming.getData();
-                String str = new String(data, 0, incoming.getLength());
-                echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
-
-                StringTokenizer st = new StringTokenizer(str, " ");
-                String length="",command="";
-                try{
-                    length = st.nextToken();
-                    command = st.nextToken();
-                }catch(Exception e){
-
-                }
-
-
-                if (command.equals("REGOK")) {
-
-                    int no_nodes = Integer.parseInt(st.nextToken());
-
-                    // Loop twice if no_nodes == 2
-                    while(no_nodes>0) {
-
-                        String join_ip = st.nextToken();
-                        String join_port = st.nextToken();
-
-                        // Send JOIN request => 'length JOIN IP_address port_no'
-                        String join =" JOIN "+join_ip+" "+join_port;
-                        String join_msg= "00"+(join.length()+4)+ join ;
-                        
-                        sendMessage(join_msg, join_ip, join_port);
-                        no_nodes -= 1;
-                    }
-
-                }
-                // ?????????????????
-                else if(command.equals("JOIN")){
-                    echo("JOINED");
-                    //joinedNodes.add(new Neighbour(ip, port, username));
-                }
-
+                listener();
 
             }
         }
@@ -181,7 +187,7 @@ public class Node implements Runnable{
         
             System.out.println("SENDING... => " + outString);
             s.send(out);
-            receive();
+            //receive();
         }catch(Exception e){
             echo("Send error!");
         }
