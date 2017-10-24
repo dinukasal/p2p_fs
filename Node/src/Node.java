@@ -10,8 +10,8 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 
 public class Node implements Runnable{
-    private DatagramSocket s;
-    private static Thread t1,t2;
+    private DatagramSocket s, n2,n3;
+    private static Thread mainThread,stdReadThread;
     private String ip_address="";
     private String server_ip="localhost";
     byte[] buf = new byte[1000];
@@ -41,12 +41,37 @@ public class Node implements Runnable{
     public void setPort(int port){
         node_port=port;
     }
+    public int getPort(){
+        return node_port;
+    }
 
     //simple function to echo data to terminal
     public void echo(String msg) {
         System.out.println(msg);
     }
 
+    public void initializeSocket(int port){
+        try{
+            n2=new DatagramSocket(port);
+        }catch(Exception e){
+
+        }
+    }
+    public void joinListener(){
+        byte[] buffer = new byte[65536];
+        DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
+        try{
+            while(true){
+                n2.receive(incoming);
+                byte[] data = incoming.getData();
+                String str = new String(data, 0, incoming.getLength());
+                echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
+            }
+        }catch(Exception e){
+
+        }
+
+    }
 
     public static void main(String args[]) throws Exception {
         // for(String s:args){  
@@ -58,35 +83,43 @@ public class Node implements Runnable{
             n1.setIP(args[1]);
 
             n1.setPort( Integer.parseInt(args[2]) );
+            n1.initializeSocket(n1.getPort());
             //n1.setIP("localhost");
 
         }catch(Exception e){
             n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
         }
 
-        t1=new Thread(n1);
-        t2=new Thread(new Runnable(){
+        mainThread=new Thread(n1);
+        stdReadThread=new Thread(new Runnable(){
             public void run(){
-                System.out.println("t2 started...");
+                System.out.println("std listener started...");
                 n1.readStdin();
             }
         });
-        t1.start();
-        t2.start();
 
+        Thread joinThread=new Thread(new Runnable(){
+            public void run(){
+                System.out.println("join listener on port "+n1.getPort()+"started..");
+
+            }
+        });
+
+        mainThread.start();
+        stdReadThread.start();
+        joinThread.start();
     }
 
     public void run(){
         echo("thread started...");
         try{
-
             startNode();
-                    
-        }catch(Exception e){
+        }
+        catch(Exception e){
             echo("Cannot start node!");
         }
     }
-    public void readStdin(){
+    public void readStdin(){    //get input from command line
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         try{
             while(true){
