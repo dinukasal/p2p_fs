@@ -10,13 +10,13 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 
 public class Node implements Runnable{
-    private DatagramSocket s, n2,n3;
+    private DatagramSocket s, node2,node3;
     private static Thread mainThread,stdReadThread;
     private String ip_address="";
     private String server_ip="localhost";
     byte[] buf = new byte[1000];
     int bs_port=55555;
-    int node_port=5001;  //if cli arguments 
+    int node_port=5001;  //if cli port argument is not given this port is used for node node comm
     String node_name="n1";
 
     InetAddress hostAddress;
@@ -50,11 +50,12 @@ public class Node implements Runnable{
         System.out.println(msg);
     }
 
-    public void initializeSocket(int port){
+    public void initializecommSocket(int port){
         try{
-            n2=new DatagramSocket(port);
+            node2=new DatagramSocket(port);
         }catch(Exception e){
-
+            echo("****** another node running in the same port!\n please enter a different port");
+            
         }
     }
     public void joinListener(){
@@ -62,7 +63,7 @@ public class Node implements Runnable{
         DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
         try{
             while(true){
-                n2.receive(incoming);
+                node2.receive(incoming);
                 byte[] data = incoming.getData();
                 String str = new String(data, 0, incoming.getLength());
                 echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
@@ -72,6 +73,56 @@ public class Node implements Runnable{
         }
 
     }
+
+    public void listener(){
+        
+                byte[] buffer = new byte[65536];
+                DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
+                try{
+                    s.receive(incoming);
+                }catch(Exception e){
+        
+                }
+        
+                byte[] data = incoming.getData();
+                String str = new String(data, 0, incoming.getLength());
+                echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
+        
+                StringTokenizer st = new StringTokenizer(str, " ");
+                String length="",command="";
+                try{
+                    length = st.nextToken();
+                    command = st.nextToken();
+                }catch(Exception e){
+        
+                }
+        
+        
+                if (command.equals("REGOK")) {
+        
+                    int no_nodes = Integer.parseInt(st.nextToken());
+        
+                    // Loop twice if no_nodes == 2
+                    while(no_nodes>0) {
+        
+                        String join_ip = st.nextToken();
+                        String join_port = st.nextToken();
+        
+                        // Send JOIN request => 'length JOIN IP_address port_no'
+                        String join =" JOIN "+join_ip+" "+join_port;
+                        String join_msg= "00"+(join.length()+4)+ join ;
+                        
+                        sendMessage(join_msg, join_ip, join_port);
+                        no_nodes -= 1;
+                    }
+        
+                }
+                // ?????????????????
+                else if(command.equals("JOIN")){
+                    echo("JOINED");
+                    //joinedNodes.add(new Neighbour(ip, port, username));
+                }
+            }
 
     public static void main(String args[]) throws Exception {
         // for(String s:args){  
@@ -83,7 +134,7 @@ public class Node implements Runnable{
             n1.setIP(args[1]);
 
             n1.setPort( Integer.parseInt(args[2]) );
-            n1.initializeSocket(n1.getPort());
+            n1.initializecommSocket(n1.getPort());
             //n1.setIP("localhost");
 
         }catch(Exception e){
@@ -98,10 +149,10 @@ public class Node implements Runnable{
             }
         });
 
-        Thread joinThread=new Thread(new Runnable(){
+        Thread joinThread=new Thread(new Runnable(){    //thread which listens on the joining
             public void run(){
-                System.out.println("join listener on port "+n1.getPort()+"started..");
-
+                System.out.println("** join listener on port "+n1.getPort()+" started..");
+                n1.joinListener();  
             }
         });
 
@@ -111,7 +162,6 @@ public class Node implements Runnable{
     }
 
     public void run(){
-        echo("thread started...");
         try{
             startNode();
         }
@@ -126,6 +176,9 @@ public class Node implements Runnable{
                 String outMessage = stdin.readLine();
                 if (outMessage.equals("bye"))
                     System.exit(1);
+                else if(outMessage.equals("join")){
+                    sendMessage("test from n1","127.0.1.1","5001");
+                }
                 else
                     echo("Enter valid command");
             }
@@ -133,56 +186,6 @@ public class Node implements Runnable{
 
         }
 
-    }
-
-    public void listener(){
-
-        byte[] buffer = new byte[65536];
-        DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
-        try{
-            s.receive(incoming);
-        }catch(Exception e){
-
-        }
-
-        byte[] data = incoming.getData();
-        String str = new String(data, 0, incoming.getLength());
-        echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
-
-        StringTokenizer st = new StringTokenizer(str, " ");
-        String length="",command="";
-        try{
-            length = st.nextToken();
-            command = st.nextToken();
-        }catch(Exception e){
-
-        }
-
-
-        if (command.equals("REGOK")) {
-
-            int no_nodes = Integer.parseInt(st.nextToken());
-
-            // Loop twice if no_nodes == 2
-            while(no_nodes>0) {
-
-                String join_ip = st.nextToken();
-                String join_port = st.nextToken();
-
-                // Send JOIN request => 'length JOIN IP_address port_no'
-                String join =" JOIN "+join_ip+" "+join_port;
-                String join_msg= "00"+(join.length()+4)+ join ;
-                
-                sendMessage(join_msg, join_ip, join_port);
-                no_nodes -= 1;
-            }
-
-        }
-        // ?????????????????
-        else if(command.equals("JOIN")){
-            echo("JOINED");
-            //joinedNodes.add(new Neighbour(ip, port, username));
-        }
     }
 
     public void startNode() throws Exception{
@@ -212,6 +215,7 @@ public class Node implements Runnable{
         sendMessage(reg, server_ip, Integer.toString(bs_port));
     }
 
+    
     public void sendMessage(String outString, String outAddress, String outPort){
         try{
 

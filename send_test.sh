@@ -1,1 +1,1 @@
-echo "test"| nc localhost 5001
+echo -n "test" > /dev/udp/localhost/5001
