@@ -149,6 +149,8 @@ public class BootstrapServer implements Runnable {
                     DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length,
                             incoming.getAddress(), incoming.getPort());
                     sock.send(dpReply);
+                }else if(command.equals("JOIN")){
+                    echo("join req came");
                 }
                 else{
                     // else returns the text where you can see and debug the code!

@@ -57,11 +57,11 @@ public class Node implements Runnable{
             n1.setName(args[0]);
             n1.setIP(args[1]);
 
-            //n1.setPort( Integer.parseInt(args[1]) );
+            n1.setPort( Integer.parseInt(args[2]) );
             //n1.setIP("localhost");
 
         }catch(Exception e){
-            n1.echo("Enter the arguments as `java Node <node name> <ip address>");
+            n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
         }
 
         t1=new Thread(n1);
@@ -94,7 +94,7 @@ public class Node implements Runnable{
 
                 if (outMessage.equals("bye"))
                     break;
-                sendMessage(outMessage, server_ip, Integer.toString(bs_port) );        // outMessage == UNREG?
+                //sendMessage(outMessage, server_ip, Integer.toString(bs_port) );        // outMessage == UNREG?
                 ///////////////////////////////////////////////////////////////////////////
 
 
@@ -164,7 +164,7 @@ public class Node implements Runnable{
         
             System.out.println("SENDING... => " + outString);
             s.send(out);
-            //receive();
+            receive();
         }catch(Exception e){
             echo("Send error!");
         }
