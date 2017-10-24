@@ -133,9 +133,9 @@ public class Node implements Runnable {
         DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
         initializecommSocket(node_port);
         while (true) {
-            try{
+            try {
                 node2.receive(incoming);
-            }catch(Exception e){
+            } catch (Exception e) {
 
             }
             byte[] data = incoming.getData();
@@ -144,8 +144,8 @@ public class Node implements Runnable {
 
             StringTokenizer st = new StringTokenizer(str, " ");
             String command = "", length = "";
-            String ip=incoming.getAddress().getHostAddress();
-            int port=incoming.getPort();
+            String ip = incoming.getAddress().getHostAddress();
+            int port = incoming.getPort();
 
             try {
                 length = st.nextToken();
@@ -161,11 +161,14 @@ public class Node implements Runnable {
 
                 initializecommSocket(port);
                 sendJoinReq(reply, ip, port);
-
                 Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
                 joinedNodes.add(tempNeighbour);
                 echo(Integer.toString(joinedNodes.size()));
 
+            } else if (command.equals("JOINOK")) {
+                Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
+                joinedNodes.add(tempNeighbour);
+                echo(Integer.toString(joinedNodes.size()));
             } else {
             }
         }
@@ -268,6 +271,12 @@ public class Node implements Runnable {
             }
         });
 
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                n1.unreg();
+            }
+        });
+
         mainThread.start();
         stdReadThread.start();
         joinThread.start();
@@ -325,7 +334,13 @@ public class Node implements Runnable {
         reg = "00" + (reg.length() + 4) + reg;
         sendMessage(reg, server_ip, Integer.toString(bs_port));
     }
-
+    
+    public void unreg() {
+        String reg = " UNREG " + ip_address + " " + node_port + " " + node_name; //node_port?
+        reg = "00" + (reg.length() + 4) + reg;
+        sendMessage(reg, server_ip, Integer.toString(bs_port));
+    }
+    
     public void sendMessage(String outString, String outAddress, String outPort) {
         try {
 
