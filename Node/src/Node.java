@@ -1,10 +1,10 @@
+//package Node.src;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
@@ -30,14 +30,15 @@ public class Node implements Runnable {
     InetAddress hostAddress;
     DatagramPacket dp;
 
+    HashMap<String, File> filesToStore = new HashMap<String, File>();
     List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
     List<String> nodeFiles = new ArrayList<String>();
 
-    public Node() throws Exception {
-        s = new DatagramSocket();
-        InetAddress IP = InetAddress.getLocalHost();
-        ip_address = IP.getHostAddress();
-        echo("IP address: " + ip_address);
+    public Node() throws Exception{
+        s=new DatagramSocket();
+        InetAddress IP=InetAddress.getLocalHost();
+        ip_address=IP.getHostAddress();
+        echo("IP address: "+ip_address);
         hostAddress = InetAddress.getByName(server_ip);
         dp = new DatagramPacket(buf, buf.length);
 
@@ -83,6 +84,35 @@ public class Node implements Runnable {
     //simple function to echo data to terminal
     public void echo(String msg) {
         System.out.println(msg);
+    }
+
+    //File Searching
+    public void searchFile(String fileName){
+
+    }
+
+    //Randomly pick two files from the file list.
+    public void initializeFiles() {
+
+        HashMap<String, File> allFiles = new HashMap<String, File>();
+        allFiles.put("Lord Of the Rings", new File("G:\\Films\\LR\\Lord of the Rings.mov"));
+        allFiles.put("Harry Porter 1", new File("G:\\Films\\HP\\Harry Porter 1.mov"));
+        allFiles.put("Fast and Furious", new File("G:\\Films\\FF\\Fast and Furious.mov"));
+        allFiles.put("La La Land", new File("G:\\Films\\LR\\La La Land.mov"));
+        allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
+        allFiles.put("Spider Man 1", new File("G:\\Films\\SP\\Spider Man 1.mov"));
+        allFiles.put("XXX", new File("G:\\Films\\XXX\\XXX.mov"));
+
+        //generate 3 random indices to pick files from hashmap
+        int[] randomIndices = new Random().ints(1, 7).distinct().limit(3).toArray();
+
+        //pick files randomly
+        ArrayList<String> keysAsArray = new ArrayList<String>(allFiles.keySet());
+        for (int fileIndex : randomIndices) {
+            filesToStore.put(keysAsArray.get(fileIndex), allFiles.get(keysAsArray.get(fileIndex)));
+
+        }
+
     }
 
     public void initializecommSocket(int port) {    // initiating the listening for the port
@@ -192,6 +222,7 @@ public class Node implements Runnable {
         // }
 
         Node n1 = new Node();
+        n1.initializeFiles();
         try {
             n1.setName(args[0]);
             n1.setIP(args[1]);
