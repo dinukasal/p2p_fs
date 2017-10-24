@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.File;
+import java.util.*;
+import java.util.logging.*;
 
 public class Node implements Runnable {
     private DatagramSocket s, node2, node3;
@@ -32,6 +34,7 @@ public class Node implements Runnable {
     DatagramPacket dp;
 
     HashMap<String, File> filesToStore = new HashMap<String, File>();
+    HashMap<String, String> addressHistory = new HashMap<String, String>();
     List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
     List<String> nodeFiles = new ArrayList<String>();
 
@@ -65,7 +68,6 @@ public class Node implements Runnable {
         return node_port;
     }
 
-
     //simple function to echo data to terminal
     public void echo(String msg) {
         System.out.println(msg);
@@ -74,6 +76,31 @@ public class Node implements Runnable {
     //File Searching
     public void searchFile(String fileName) {
 
+    }
+
+    public void serialize() {
+        try (OutputStream file = new FileOutputStream("addresses.ser");
+                OutputStream buffer = new BufferedOutputStream(file);
+                ObjectOutput output = new ObjectOutputStream(buffer);) {
+            output.writeObject(addressHistory);
+        } catch (IOException ex) {
+            fLogger.log(Level.SEVERE, "Cannot perform output.", ex);
+        }
+    }
+
+    public void deserialize() {
+        try (InputStream file = new FileInputStream("addresses.ser");
+                InputStream buffer = new BufferedInputStream(file);
+                ObjectInput input = new ObjectInputStream(buffer);) {
+            //deserialize the List
+            List<String,String> recoveredQuarks = (List<String,String>) input.readObject();
+            //display its data
+            for (String quark : recoveredQuarks) {
+                System.out.println("Recovered Quark: " + quark);
+            }
+        } catch (ClassNotFoundException ex) {
+            fLogger.log(Level.SEVERE, "Cannot perform input. Class not found.", ex);
+        }
     }
 
     //Randomly pick two files from the file list.
@@ -99,7 +126,6 @@ public class Node implements Runnable {
         }
 
         filesToStore.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
-
 
     }
 
@@ -165,29 +191,32 @@ public class Node implements Runnable {
                         boolean fileFound = false;
 
                         for (String fileNames : filesToStore.keySet()) {
-                            System.out.println(fileNames+" "+searchFile);
+                            System.out.println(fileNames + " " + searchFile);
                             if (searchFile.equals(fileNames)) {
                                 System.out.println("File is found!!!");
                                 fileFound = true;
                             }
                         }
-                        if(!fileFound) {
+                        if (!fileFound) {
                             //select random node from neighbours
                             Random r = new Random();
                             Neighbour randomSuccessor = null;
 
-                            while(true) {
+                            while (true) {
                                 randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
 
-                                if(!(randomSuccessor.getIp().equals(incoming.getAddress().getHostAddress()) && randomSuccessor.getPort() == incoming.getPort())) {
+                                if (!(randomSuccessor.getIp().equals(incoming.getAddress().getHostAddress())
+                                        && randomSuccessor.getPort() == incoming.getPort())) {
                                     break;
                                 }
                             }
 
                             //send search message to picked neighbour
-                            String searchCommand = " SER " + ip_address + " " + node_port + " Lord_of_the_Rings " + --hops;
+                            String searchCommand = " SER " + ip_address + " " + node_port + " Lord_of_the_Rings "
+                                    + --hops;
                             searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
-                            sendMessage(searchCommand, randomSuccessor.getIp(), String.valueOf(randomSuccessor.getPort()));
+                            sendMessage(searchCommand, randomSuccessor.getIp(),
+                                    String.valueOf(randomSuccessor.getPort()));
 
                             System.out.println("Request is forwareded!!!");
                         }
@@ -288,13 +317,11 @@ public class Node implements Runnable {
 
         Thread listnerThread = new Thread(new Runnable() { //thread which listens on the joining
 
-
             public void run() {
                 System.out.println("** join listener on port " + n1.getPort() + " started..");
                 n1.joinListener();
             }
         });
-
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
