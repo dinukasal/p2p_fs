@@ -1,3 +1,4 @@
+
 //package Node.src;
 
 import java.io.File;
@@ -34,11 +35,13 @@ public class Node implements Runnable {
     List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
     List<String> nodeFiles = new ArrayList<String>();
 
-    public Node() throws Exception{
-        s=new DatagramSocket();
-        InetAddress IP=InetAddress.getLocalHost();
-        ip_address=IP.getHostAddress();
-        echo("IP address: "+ip_address);
+    static Thread joinThread;
+
+    public Node() throws Exception {
+        s = new DatagramSocket();
+        InetAddress IP = InetAddress.getLocalHost();
+        ip_address = IP.getHostAddress();
+        echo("IP address: " + ip_address);
         hostAddress = InetAddress.getByName(server_ip);
         dp = new DatagramPacket(buf, buf.length);
 
@@ -87,7 +90,7 @@ public class Node implements Runnable {
     }
 
     //File Searching
-    public void searchFile(String fileName){
+    public void searchFile(String fileName) {
 
     }
 
@@ -115,11 +118,12 @@ public class Node implements Runnable {
 
     }
 
-    public void initializecommSocket(int port) {    // initiating the listening for the port
+    public void initializecommSocket(int port) { // initiating the listening for the port
+        echo("listening to " + port);
         try {
             node2 = new DatagramSocket(port);
         } catch (Exception e) {
-            echo("****** another node running in the same port!\n please enter a different port");
+            //echo("****** another node running in the same port!\n please enter a different port");
 
         }
     }
@@ -127,30 +131,43 @@ public class Node implements Runnable {
     public void joinListener() {
         byte[] buffer = new byte[65536];
         DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
-        try {
-            initializecommSocket(node_port);
-            while (true) {
+        initializecommSocket(node_port);
+        while (true) {
+            try{
                 node2.receive(incoming);
-                byte[] data = incoming.getData();
-                String str = new String(data, 0, incoming.getLength());
-                    echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
+            }catch(Exception e){
 
-                StringTokenizer st = new StringTokenizer(str, " ");
-                String command = "",length="";
-                length=st.nextToken();
-                command = st.nextToken();
-                echo("command: "+command);
-                
-                if(command=="JOIN"){
-                    echo("join req came");
-                    String reply=" JOINOK 0";
-                    reply="00"+(reply.length()+2)+reply;
-                    sendJoinReq(reply,ip_address,node_port);
-                }else{
-                }
             }
-        } catch (Exception e) {
+            byte[] data = incoming.getData();
+            String str = new String(data, 0, incoming.getLength());
+            echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
 
+            StringTokenizer st = new StringTokenizer(str, " ");
+            String command = "", length = "";
+            String ip=incoming.getAddress().getHostAddress();
+            int port=incoming.getPort();
+
+            try {
+                length = st.nextToken();
+                command = st.nextToken();
+            } catch (Exception e) {
+            }
+
+            echo("command: " + command);
+
+            if (command.equals("JOIN")) {
+                String reply = " JOINOK 0";
+                reply = "00" + (reply.length() + 2) + reply;
+
+                initializecommSocket(port);
+                sendJoinReq(reply, ip, port);
+
+                Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
+                joinedNodes.add(tempNeighbour);
+                echo(Integer.toString(joinedNodes.size()));
+
+            } else {
+            }
         }
 
     }
@@ -158,10 +175,9 @@ public class Node implements Runnable {
     public void sendJoinReq(String outString, String outAddress, int outPort) {
         try {
             buf = outString.getBytes();
-            DatagramPacket out = new DatagramPacket(buf, buf.length, InetAddress.getByName(outAddress),
-                    outPort);
+            DatagramPacket out = new DatagramPacket(buf, buf.length, InetAddress.getByName(outAddress), outPort);
 
-            System.out.println("SENDING... => " + outString);
+            System.out.println("SENDING... => " + outString + " to " + outPort);
             node2.send(out);
         } catch (Exception e) {
 
@@ -201,12 +217,14 @@ public class Node implements Runnable {
                 String join_ip = st.nextToken();
                 String join_port = st.nextToken();
 
-                // Send JOIN request => 'length JOIN IP_address port_no'
-                String join = " JOIN " + join_ip + " " + join_port;
-                String join_msg = "00" + (join.length() + 4) + join;
+                if (Integer.parseInt(join_port) != node_port) {
+                    // Send JOIN request => 'length JOIN IP_address port_no'
+                    String join = " JOIN " + join_ip + " " + join_port;
+                    String join_msg = "00" + (join.length() + 4) + join;
 
-                sendJoinReq(join_msg, join_ip, Integer.parseInt(join_port));
-                no_nodes -= 1;
+                    sendJoinReq(join_msg, join_ip, Integer.parseInt(join_port));
+                    no_nodes -= 1;
+                }
             }
 
         }
@@ -243,7 +261,7 @@ public class Node implements Runnable {
             }
         });
 
-        Thread joinThread = new Thread(new Runnable() { //thread which listens on the joining
+        joinThread = new Thread(new Runnable() { //thread which listens on the joining
             public void run() {
                 System.out.println("** join listener on port " + n1.getPort() + " started..");
                 n1.joinListener();
@@ -315,7 +333,7 @@ public class Node implements Runnable {
             DatagramPacket out = new DatagramPacket(buf, buf.length, InetAddress.getByName(outAddress),
                     Integer.parseInt(outPort));
 
-            System.out.println("SENDING... => " + outString);
+            System.out.println("SENDING... => " + outString + " to " + outPort);
             s.send(out);
             //receive();
         } catch (Exception e) {
