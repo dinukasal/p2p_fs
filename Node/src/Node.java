@@ -9,6 +9,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 
+import java.util.Scanner;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.File;
+
 public class Node implements Runnable{
     private DatagramSocket s, n2,n3;
     private static Thread mainThread,stdReadThread;
@@ -22,6 +30,9 @@ public class Node implements Runnable{
     InetAddress hostAddress;
     DatagramPacket dp;
 
+    List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
+    List<String> nodeFiles = new ArrayList<String>();
+
     public Node() throws Exception{
         s=new DatagramSocket();
         InetAddress IP=InetAddress.getLocalHost();
@@ -30,7 +41,7 @@ public class Node implements Runnable{
         hostAddress = InetAddress.getByName(server_ip);
         dp = new DatagramPacket(buf, buf.length);
 
-        List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
+        setRandomFiles();
     }
     public void setName(String name){
         node_name=name;
@@ -43,6 +54,26 @@ public class Node implements Runnable{
     }
     public int getPort(){
         return node_port;
+    }
+
+    public void setRandomFiles() throws java.io.IOException{
+        
+        // FileNames.txt -> List
+        Scanner sc = new Scanner(new File("FileNames.txt").toPath());
+        List<String> fileNamesList = new ArrayList<String>();
+        while (sc.hasNextLine()) {
+            fileNamesList.add(sc.nextLine());
+        }
+        
+        int num_files = ThreadLocalRandom.current().nextInt(3, 6);
+        for(int i=0; i<num_files; i++){
+            Random rn = new Random();
+            int rn_index = rn.nextInt(fileNamesList.size()) + 1;
+            nodeFiles.add(fileNamesList.get(rn_index));
+        }
+        System.out.println("Random Files Selected...");
+        
+        // HANDLE DUPLICATES???
     }
 
     //simple function to echo data to terminal
