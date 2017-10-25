@@ -37,7 +37,9 @@ public class Node implements Runnable {
     private final static Logger fLogger = Logger.getLogger(Node.class.getName());
 
     static Thread joinThread;
-
+    String portfileName="port";
+    
+    //constructor
     public Node() throws Exception {
         s = new DatagramSocket();
         InetAddress IP = InetAddress.getLocalHost();
@@ -396,8 +398,11 @@ public class Node implements Runnable {
 
     }
 
-    public void startNode() throws Exception {
+    public void startNode() throws Exception {  //node initializer
         try {
+            String last_port=readPort();
+            // int last_port=Integer.parseInt(readPort());
+            //  unregPort(Integer.parseInt(last_port));
 
             doREG();
 
@@ -417,10 +422,68 @@ public class Node implements Runnable {
         }
     }
 
+    public void writePort(int port){ //make port persistent
+        try {
+            // Assume default encoding.
+            FileWriter fileWriter =
+                new FileWriter(portfileName);
+
+            // Always wrap FileWriter in BufferedWriter.
+            BufferedWriter bufferedWriter =
+                new BufferedWriter(fileWriter);
+
+            // Note that write() does not automatically
+            // append a newline character.
+            bufferedWriter.write(Integer.toString(port));
+
+            // Always close files.
+            bufferedWriter.close();
+        }
+        catch(IOException ex) {
+            System.out.println(
+                "Error writing to file '"
+                + portfileName + "'");
+            // Or we could just do this:
+            // ex.printStackTrace();
+        }
+    }
+
+    public String readPort(){
+        try {
+            // Use this for reading the data.
+            byte[] buffer = new byte[1000];
+
+            FileInputStream inputStream = 
+                new FileInputStream(portfileName);
+
+            int total = 0;
+            int nRead = 0;
+            while((nRead = inputStream.read(buffer)) != -1) {
+                System.out.println(new String(buffer));
+                total += nRead;
+                return new String(buffer);
+            }   
+
+            inputStream.close();        
+            // System.out.println("Read " + total + " bytes");
+        }
+        catch(FileNotFoundException ex) {
+            System.out.println(
+                "Unable to open file '" + 
+                portfileName + "'");                
+        }
+        catch(IOException ex) {
+            System.out.println(
+                "Error reading file '" 
+                + portfileName + "'");                  
+        }
+        return "-1";
+    }
+
     public void doREG() {
         Random r = new Random();
         node_port= Math.abs(r.nextInt())%6000+3000;
-        
+        writePort(node_port);
         String reg = " REG " + ip_address + " " + node_port + " " + node_name; //node_port?
         reg = "00" + (reg.length() + 4) + reg;
 
@@ -429,6 +492,12 @@ public class Node implements Runnable {
 
     public void unreg() {
         String reg = " UNREG " + ip_address + " " + node_port + " " + node_name; //node_port?
+        reg = "00" + (reg.length() + 4) + reg;
+        sendMessage(reg, server_ip, Integer.toString(bs_port));
+    }
+
+    public void unregPort(int port) {
+        String reg = " UNREG " + ip_address + " " + port + " " + node_name; //node_port?
         reg = "00" + (reg.length() + 4) + reg;
         sendMessage(reg, server_ip, Integer.toString(bs_port));
     }
