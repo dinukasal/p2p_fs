@@ -21,8 +21,10 @@ Needed commands are in 'one_node.sh' for easy execution in Linux terminal.
         javac Node/src/Neighbour.java Node/src/Node.java -d Node
         cd Node && java Node
 
+    _Search File_
+        While node is running, can search for files in the terminal.
 
-
+        'ser Twilight' will issue search command between nodes, and will be notifed once file is found.
 
 
 *** However for the ease of modeling multiple nodes there's 'node.sh' script.
