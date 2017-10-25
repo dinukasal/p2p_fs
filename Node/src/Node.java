@@ -441,6 +441,7 @@ public class Node implements Runnable {
     public void startNode() throws Exception {  //node initializer
         try {
             String last_port=readPort();
+            echo(last_port);
             // int last_port=Integer.parseInt(readPort());
             //  unregPort(Integer.parseInt(last_port));
 
