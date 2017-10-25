@@ -121,7 +121,6 @@ public class Node implements Runnable {
         allFiles.put("La_La_Land", new File("G:\\Films\\LR\\La_La_Land.mov"));
         allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
         allFiles.put("Spider_Man_1", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
-        allFiles.put("XXX", new File("G:\\Films\\XXX\\XXX.mov"));
 
         //generate 3 random indices to pick files from hashmap
         int[] randomIndices = new Random().ints(1, 7).distinct().limit(3).toArray();
@@ -440,10 +439,10 @@ public class Node implements Runnable {
 
     public void startNode() throws Exception {  //node initializer
         try {
-            String last_port=readPort();
-            echo(last_port);
+            // String last_port=readPort();
+            // echo(last_port);
             // int last_port=Integer.parseInt(readPort());
-            //  unregPort(Integer.parseInt(last_port));
+            // unregPort(Integer.parseInt(last_port));
 
             doREG();
 
@@ -463,6 +462,7 @@ public class Node implements Runnable {
         }
     }
 
+    //configurations -- port 
     public void writePort(int port){ //make port persistent
         try {
             // Assume default encoding.
@@ -491,6 +491,25 @@ public class Node implements Runnable {
 
     public String readPort(){
         try {
+			File file = new File("port");
+			FileReader fileReader = new FileReader(file);
+			BufferedReader bufferedReader = new BufferedReader(fileReader);
+			StringBuffer stringBuffer = new StringBuffer();
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				stringBuffer.append(line);
+                return stringBuffer.toString();
+				// stringBuffer.append("\n");
+			}
+			fileReader.close();
+			System.out.println("Contents of file:");
+            System.out.println(stringBuffer.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+        }
+        /*
+
+        try {
             // Use this for reading the data.
             byte[] buffer = new byte[1000];
 
@@ -518,6 +537,7 @@ public class Node implements Runnable {
                 "Error reading file '" 
                 + portfileName + "'");                  
         }
+        */
         return "-1";
     }
 
