@@ -160,6 +160,8 @@ public class Node implements Runnable {
             }
             byte[] data = incoming.getData();
             String str = new String(data, 0, incoming.getLength());
+
+            if(!str.contains("hbt") && !str.contains("hbtok"))
             echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
 
             StringTokenizer st = new StringTokenizer(str, " ");
@@ -170,7 +172,7 @@ public class Node implements Runnable {
             try {
                 length = st.nextToken();
                 command = st.nextToken();
-                if (!command.equals("hbt") || !command.equals("hbtok"))
+                if (!command.equals("hbt") && !command.equals("hbtok"))
                     echo("command: " + command);
 
                 if (command.equals("JOIN")) {
@@ -195,7 +197,7 @@ public class Node implements Runnable {
                     String reg = " hbtok "; //send this node values to other
                     reg = "00" + (reg.length() + 4) + reg;
 
-                    sendMessage(reg, originatorIP, Integer.toString(originatorPort));
+                    sendMessage_no_stdout(reg, originatorIP, Integer.toString(originatorPort));
 
                 } else if (command.equals("hbtok")) {
 
@@ -323,7 +325,7 @@ public class Node implements Runnable {
         byte[] data = incoming.getData();
         String str = new String(data, 0, incoming.getLength());
 
-        if(!str.contains("hbt") || !str.contains("hbt"))
+        if(!str.contains("hbt") && !str.contains("hbt"))
         echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
 
         StringTokenizer st = new StringTokenizer(str, " ");
@@ -394,6 +396,7 @@ public class Node implements Runnable {
                 } else if (outMessage.contains("ser")) {
                     String searchQuery = outMessage.split(" ")[1];
 
+                    echo("ser caught****");
                     //select random node from neighbours
                     Random r = new Random();
                     Neighbour randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
@@ -541,9 +544,21 @@ public class Node implements Runnable {
             DatagramPacket out = new DatagramPacket(buf, buf.length, InetAddress.getByName(outAddress),
                     Integer.parseInt(outPort));
 
-            if (!outString.contains("hbt") || !outString.contains("hbtok")) {
                 System.out.println("SENDING... => " + outString + " to " + outPort);
-            }
+            s.send(out);
+            //receive();
+        } catch (Exception e) {
+            echo("Send error!");
+        }
+    }
+
+    public void sendMessage_no_stdout(String outString, String outAddress, String outPort) {
+        try {
+
+            buf = outString.getBytes();
+            DatagramPacket out = new DatagramPacket(buf, buf.length, InetAddress.getByName(outAddress),
+                    Integer.parseInt(outPort));
+
             s.send(out);
             //receive();
         } catch (Exception e) {
@@ -562,7 +577,7 @@ public class Node implements Runnable {
         String rcvd = "rcvd from " + dp.getAddress() + ":" + dp.getPort() + " => "
                 + new String(dp.getData(), 0, dp.getLength());
 
-        if (!rcvd.contains("hbt") || !rcvd.contains("hbtok"))
+        if (!rcvd.contains("hbt") && !rcvd.contains("hbtok"))
             System.out.println(rcvd);
     }
 
@@ -572,9 +587,9 @@ public class Node implements Runnable {
                 String reg = " hbt " + ip_address + " " + node_port; //send this node values to other
                 reg = "00" + (reg.length() + 4) + reg;
 
-                sendMessage(reg, n.getIp(), Integer.toString(n.getPort()));
+                sendMessage_no_stdout(reg, n.getIp(), Integer.toString(n.getPort()));
             }
-            Thread.sleep(1000);
+            Thread.sleep(5000);
         }
 
     }
