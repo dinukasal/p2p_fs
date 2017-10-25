@@ -277,7 +277,7 @@ public class Node implements Runnable {
             int no_nodes = Integer.parseInt(st.nextToken());
 
             // Loop twice if no_nodes == 2
-            while (no_nodes > 0) {
+            while (no_nodes > 0 && no_nodes<21) {
 
                 String join_ip = st.nextToken();
                 String join_port = st.nextToken();
@@ -292,6 +292,13 @@ public class Node implements Runnable {
                 }
             }
 
+            if(no_nodes==9999){
+                echo("There's an error in the command");
+            }else if(no_nodes==9998){
+                unreg();
+                doREG();
+            }
+
         }
         // ?????????????????
         else if (command.equals("JOIN")) {
@@ -303,17 +310,22 @@ public class Node implements Runnable {
     public static void main(String args[]) throws Exception {
 
         Node n1 = new Node();
+
+        
+        // n1.setPort();
+        /*
         try {
             n1.setName(args[0]);
             n1.setIP(args[1]);
 
-            n1.setPort(Integer.parseInt(args[2]));
+            // n1.setPort(Integer.parseInt(args[2]));
             n1.initializecommSocket(n1.getPort());
             //n1.setIP("localhost");
 
         } catch (Exception e) {
             n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
         }
+        */
 
         mainThread = new Thread(n1);
         stdReadThread = new Thread(new Runnable() {
@@ -331,7 +343,7 @@ public class Node implements Runnable {
             }
         });
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {     //unregister on ctrl+c or exit
             public void run() {
                 n1.unreg();
             }
@@ -406,6 +418,9 @@ public class Node implements Runnable {
     }
 
     public void doREG() {
+        Random r = new Random();
+        node_port= Math.abs(r.nextInt())%6000+3000;
+        
         String reg = " REG " + ip_address + " " + node_port + " " + node_name; //node_port?
         reg = "00" + (reg.length() + 4) + reg;
 
