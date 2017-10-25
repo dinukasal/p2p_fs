@@ -1,13 +1,10 @@
 
 //package Node.src;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 
 import java.util.Scanner;
@@ -37,8 +34,10 @@ public class Node implements Runnable {
     HashMap<String, String> addressHistory = new HashMap<String, String>();
     List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
     List<String> nodeFiles = new ArrayList<String>();
+    private final static Logger fLogger = Logger.getLogger(Node.class.getName());
 
     static Thread joinThread;
+
 
     public Node() throws Exception {
         s = new DatagramSocket();
@@ -80,8 +79,8 @@ public class Node implements Runnable {
 
     public void serialize() {
         try (OutputStream file = new FileOutputStream("addresses.ser");
-                OutputStream buffer = new BufferedOutputStream(file);
-                ObjectOutput output = new ObjectOutputStream(buffer);) {
+             OutputStream buffer = new BufferedOutputStream(file);
+             ObjectOutput output = new ObjectOutputStream(buffer);) {
             output.writeObject(addressHistory);
         } catch (IOException ex) {
             fLogger.log(Level.SEVERE, "Cannot perform output.", ex);
@@ -90,16 +89,20 @@ public class Node implements Runnable {
 
     public void deserialize() {
         try (InputStream file = new FileInputStream("addresses.ser");
-                InputStream buffer = new BufferedInputStream(file);
-                ObjectInput input = new ObjectInputStream(buffer);) {
+             InputStream buffer = new BufferedInputStream(file);
+             ObjectInput input = new ObjectInputStream(buffer);) {
             //deserialize the List
-            List<String,String> recoveredQuarks = (List<String,String>) input.readObject();
+            List<String> recoveredQuarks = (List<String>) input.readObject();
             //display its data
             for (String quark : recoveredQuarks) {
                 System.out.println("Recovered Quark: " + quark);
             }
-        } catch (ClassNotFoundException ex) {
-            fLogger.log(Level.SEVERE, "Cannot perform input. Class not found.", ex);
+        } catch (ClassNotFoundException e) {
+            fLogger.log(Level.SEVERE, "Cannot perform input. Class not found.", e);
+        } catch (FileNotFoundException e) {
+            fLogger.log(Level.SEVERE, "Cannot perform input. File not found.", e);
+        } catch (IOException e) {
+            fLogger.log(Level.SEVERE, "Cannot perform input. IO exception.", e);
         }
     }
 
