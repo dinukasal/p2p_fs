@@ -1,13 +1,10 @@
 
 //package Node.src;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 
 import java.util.Scanner;
@@ -17,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.File;
+import java.util.*;
+import java.util.logging.*;
 
 public class Node implements Runnable {
     private DatagramSocket s, node2, node3;
@@ -33,8 +32,10 @@ public class Node implements Runnable {
     DatagramPacket dp;
 
     HashMap<String, File> filesToStore = new HashMap<String, File>();
+    HashMap<String, String> addressHistory = new HashMap<String, String>();
     List<Neighbour> joinedNodes = new ArrayList<Neighbour>();
     List<String> nodeFiles = new ArrayList<String>();
+    private final static Logger fLogger = Logger.getLogger(Node.class.getName());
 
     static Thread joinThread;
 
@@ -44,10 +45,13 @@ public class Node implements Runnable {
         ip_address = IP.getHostAddress();
         echo("IP address: " + ip_address);
         hostAddress = InetAddress.getByName(server_ip);
-        dp = new DatagramPacket(buf, buf.length);
-        //initiate files
-        initializeFiles();
+        try {
+            dp = new DatagramPacket(buf, buf.length);
+            //initiate files
+            initializeFiles();
+        } catch (Exception e) {
 
+        }
     }
 
     public void setName(String name) {
@@ -66,7 +70,6 @@ public class Node implements Runnable {
         return node_port;
     }
 
-
     //simple function to echo data to terminal
     public void echo(String msg) {
         System.out.println(msg);
@@ -75,6 +78,35 @@ public class Node implements Runnable {
     //File Searching
     public void searchFile(String fileName) {
 
+    }
+
+    public void serialize() {
+        try (OutputStream file = new FileOutputStream("addresses.ser");
+                OutputStream buffer = new BufferedOutputStream(file);
+                ObjectOutput output = new ObjectOutputStream(buffer);) {
+            output.writeObject(addressHistory);
+        } catch (IOException ex) {
+            fLogger.log(Level.SEVERE, "Cannot perform output.", ex);
+        }
+    }
+
+    public void deserialize() {
+        try (InputStream file = new FileInputStream("addresses.ser");
+                InputStream buffer = new BufferedInputStream(file);
+                ObjectInput input = new ObjectInputStream(buffer);) {
+            //deserialize the List
+            List<String> recoveredQuarks = (List<String>) input.readObject();
+            //display its data
+            for (String quark : recoveredQuarks) {
+                System.out.println("Recovered Quark: " + quark);
+            }
+        } catch (ClassNotFoundException e) {
+            fLogger.log(Level.SEVERE, "Cannot perform input. Class not found.", e);
+        } catch (FileNotFoundException e) {
+            fLogger.log(Level.SEVERE, "Cannot perform input. File not found.", e);
+        } catch (IOException e) {
+            fLogger.log(Level.SEVERE, "Cannot perform input. IO exception.", e);
+        }
     }
 
     //Randomly pick two files from the file list.
@@ -145,12 +177,12 @@ public class Node implements Runnable {
                     sendJoinReq(reply, ip, port);
                     Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
                     joinedNodes.add(tempNeighbour);
-                    echo(Integer.toString(joinedNodes.size()));
+                    // echo(Integer.toString(joinedNodes.size()));
 
                 } else if (command.equals("JOINOK")) {
                     Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
                     joinedNodes.add(tempNeighbour);
-                    echo(Integer.toString(joinedNodes.size()));
+                    // echo(Integer.toString(joinedNodes.size()));
                 } else if (command.equals("SER")) {
 
                     String originatorIP = st.nextToken();
@@ -201,18 +233,21 @@ public class Node implements Runnable {
                             Random r = new Random();
                             Neighbour randomSuccessor = null;
 
-                            while(true) {
+                            while (true) {
                                 randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
 
-                                if(!(randomSuccessor.getIp().equals(incoming.getAddress().getHostAddress()) && randomSuccessor.getPort() == incoming.getPort())) {
+                                if (!(randomSuccessor.getIp().equals(incoming.getAddress().getHostAddress())
+                                        && randomSuccessor.getPort() == incoming.getPort())) {
                                     break;
                                 }
                             }
 
                             //send search message to picked neighbour
                             String searchCommand = " SER " + originatorIP + " " + originatorPort + " Lord_of_the_Rings " + --hops;
+
                             searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
-                            sendMessage(searchCommand, randomSuccessor.getIp(), String.valueOf(randomSuccessor.getPort()));
+                            sendMessage(searchCommand, randomSuccessor.getIp(),
+                                    String.valueOf(randomSuccessor.getPort()));
 
                             System.out.println("Request is forwareded!!!");
                         }
@@ -233,6 +268,9 @@ public class Node implements Runnable {
                 }
             } catch (Exception e) {
                 System.out.println(e);
+                for (int i = 0; i < 3; i++) {   //reconnecting on the port if an eception occurs
+                    initializecommSocket(node_port);
+                }
             }
         }
 
@@ -278,7 +316,7 @@ public class Node implements Runnable {
             int no_nodes = Integer.parseInt(st.nextToken());
 
             // Loop twice if no_nodes == 2
-            while (no_nodes > 0) {
+            while (no_nodes > 0 && no_nodes<21) {
 
                 String join_ip = st.nextToken();
                 String join_port = st.nextToken();
@@ -293,6 +331,13 @@ public class Node implements Runnable {
                 }
             }
 
+            if(no_nodes==9999){
+                echo("There's an error in the command");
+            }else if(no_nodes==9998){
+                unreg();
+                doREG();
+            }
+
         }
         // ?????????????????
         else if (command.equals("JOIN")) {
@@ -304,17 +349,22 @@ public class Node implements Runnable {
     public static void main(String args[]) throws Exception {
 
         Node n1 = new Node();
+
+        
+        // n1.setPort();
+        /*
         try {
             n1.setName(args[0]);
             n1.setIP(args[1]);
 
-            n1.setPort(Integer.parseInt(args[2]));
+            // n1.setPort(Integer.parseInt(args[2]));
             n1.initializecommSocket(n1.getPort());
             //n1.setIP("localhost");
 
         } catch (Exception e) {
             n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
         }
+        */
 
         mainThread = new Thread(n1);
         stdReadThread = new Thread(new Runnable() {
@@ -326,15 +376,13 @@ public class Node implements Runnable {
 
         Thread listnerThread = new Thread(new Runnable() { //thread which listens on the joining
 
-
             public void run() {
                 System.out.println("** join listener on port " + n1.getPort() + " started..");
                 n1.joinListener();
             }
         });
 
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
+        Runtime.getRuntime().addShutdownHook(new Thread() {     //unregister on ctrl+c or exit
             public void run() {
                 n1.unreg();
             }
@@ -410,6 +458,9 @@ public class Node implements Runnable {
     }
 
     public void doREG() {
+        Random r = new Random();
+        node_port= Math.abs(r.nextInt())%6000+3000;
+        
         String reg = " REG " + ip_address + " " + node_port + " " + node_name; //node_port?
         reg = "00" + (reg.length() + 4) + reg;
 

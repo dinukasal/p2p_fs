@@ -81,7 +81,6 @@ public class BootstrapServer implements Runnable {
                         nodes.add(new Neighbour(ip, port, username));
                     } else {
                         boolean isOkay = true;
-                        /*
                 
                         for (int i = 0; i < nodes.size(); i++) {
                             if (nodes.get(i).getPort() == port) {
@@ -93,7 +92,6 @@ public class BootstrapServer implements Runnable {
                                 isOkay = false;
                             }
                         }
-                        */
 
                         /*  
                             PORT IS SAME AS OF CURRENT NODE CODE. SO => 
