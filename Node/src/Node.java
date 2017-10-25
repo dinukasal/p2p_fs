@@ -38,17 +38,19 @@ public class Node implements Runnable {
 
     static Thread joinThread;
 
-
     public Node() throws Exception {
         s = new DatagramSocket();
         InetAddress IP = InetAddress.getLocalHost();
         ip_address = IP.getHostAddress();
         echo("IP address: " + ip_address);
         hostAddress = InetAddress.getByName(server_ip);
-        dp = new DatagramPacket(buf, buf.length);
-        //initiate files
-        initializeFiles();
+        try {
+            dp = new DatagramPacket(buf, buf.length);
+            //initiate files
+            initializeFiles();
+        } catch (Exception e) {
 
+        }
     }
 
     public void setName(String name) {
@@ -79,8 +81,8 @@ public class Node implements Runnable {
 
     public void serialize() {
         try (OutputStream file = new FileOutputStream("addresses.ser");
-             OutputStream buffer = new BufferedOutputStream(file);
-             ObjectOutput output = new ObjectOutputStream(buffer);) {
+                OutputStream buffer = new BufferedOutputStream(file);
+                ObjectOutput output = new ObjectOutputStream(buffer);) {
             output.writeObject(addressHistory);
         } catch (IOException ex) {
             fLogger.log(Level.SEVERE, "Cannot perform output.", ex);
@@ -89,8 +91,8 @@ public class Node implements Runnable {
 
     public void deserialize() {
         try (InputStream file = new FileInputStream("addresses.ser");
-             InputStream buffer = new BufferedInputStream(file);
-             ObjectInput input = new ObjectInputStream(buffer);) {
+                InputStream buffer = new BufferedInputStream(file);
+                ObjectInput input = new ObjectInputStream(buffer);) {
             //deserialize the List
             List<String> recoveredQuarks = (List<String>) input.readObject();
             //display its data
@@ -174,12 +176,12 @@ public class Node implements Runnable {
                     sendJoinReq(reply, ip, port);
                     Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
                     joinedNodes.add(tempNeighbour);
-                    echo(Integer.toString(joinedNodes.size()));
+                    // echo(Integer.toString(joinedNodes.size()));
 
                 } else if (command.equals("JOINOK")) {
                     Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
                     joinedNodes.add(tempNeighbour);
-                    echo(Integer.toString(joinedNodes.size()));
+                    // echo(Integer.toString(joinedNodes.size()));
                 } else if (command.equals("SER")) {
 
                     String originatorIP = st.nextToken();
@@ -227,6 +229,9 @@ public class Node implements Runnable {
                 }
             } catch (Exception e) {
                 System.out.println(e);
+                for (int i = 0; i < 3; i++) {   //reconnecting on the port if an eception occurs
+                    initializecommSocket(node_port);
+                }
             }
         }
 
