@@ -19,7 +19,7 @@ import java.util.logging.*;
 
 public class Node implements Runnable {
     private DatagramSocket s, node2, node3;
-    private static Thread mainThread, stdReadThread;
+    private static Thread mainThread, stdReadThread, htbThread;
     private String ip_address = "";
     private String server_ip = "localhost";
     byte[] buf = new byte[1000];
@@ -38,9 +38,11 @@ public class Node implements Runnable {
     private final static Logger fLogger = Logger.getLogger(Node.class.getName());
 
     static Thread joinThread;
+
     String portfileName="port";
     
     //constructor
+
     public Node() throws Exception {
         s = new DatagramSocket();
         InetAddress IP = InetAddress.getLocalHost();
@@ -188,7 +190,19 @@ public class Node implements Runnable {
                 } else if (command.equals("JOINOK")) {
                     Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
                     joinedNodes.add(tempNeighbour);
-                    // echo(Integer.toString(joinedNodes.size()));
+                    echo(Integer.toString(joinedNodes.size()));
+                } else if (command.equals("hbt")){
+
+                    String originatorIP = st.nextToken();
+                    int originatorPort = Integer.parseInt(st.nextToken());
+
+                    String reg = " hbtok "; //send this node values to other
+                    reg = "00" + (reg.length() + 4) + reg;
+
+                    sendMessage(reg, originatorIP, Integer.toString(originatorPort));
+
+                } else if (command.equals("hbtok")) {
+
                 } else if (command.equals("SER")) {
 
                     String originatorIP = st.nextToken();
@@ -350,53 +364,6 @@ public class Node implements Runnable {
             echo("JOINED");
             //joinedNodes.add(new Neighbour(ip, port, username));
         }
-    }
-
-    public static void main(String args[]) throws Exception {
-
-        Node n1 = new Node();
-
-        
-        // n1.setPort();
-        /*
-        try {
-            n1.setName(args[0]);
-            n1.setIP(args[1]);
-
-            // n1.setPort(Integer.parseInt(args[2]));
-            n1.initializecommSocket(n1.getPort());
-            //n1.setIP("localhost");
-
-        } catch (Exception e) {
-            n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
-        }
-        */
-
-        mainThread = new Thread(n1);
-        stdReadThread = new Thread(new Runnable() {
-            public void run() {
-                System.out.println("std listener started...");
-                n1.readStdin();
-            }
-        });
-
-        Thread listnerThread = new Thread(new Runnable() { //thread which listens on the joining
-
-            public void run() {
-                System.out.println("** join listener on port " + n1.getPort() + " started..");
-                n1.joinListener();
-            }
-        });
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {     //unregister on ctrl+c or exit
-            public void run() {
-                n1.unreg();
-            }
-        });
-
-        mainThread.start();
-        stdReadThread.start();
-        listnerThread.start();
     }
 
     public void run() {
@@ -594,6 +561,68 @@ public class Node implements Runnable {
         String rcvd = "rcvd from " + dp.getAddress() + ":" + dp.getPort() + " => "
                 + new String(dp.getData(), 0, dp.getLength());
         System.out.println(rcvd);
+    }
+
+
+    public void sendHbt() throws InterruptedException {
+        while (true) {
+            for (Neighbour n : joinedNodes) {
+                String reg = " hbt " + ip_address + " " + node_port; //send this node values to other
+                reg = "00" + (reg.length() + 4) + reg;
+
+                sendMessage(reg, n.getIp(), Integer.toString(n.getPort()));
+            }
+            Thread.sleep(1000);
+        }
+
+    }
+
+    public static void main(String args[]) throws Exception {
+
+        Node n1 = new Node();
+//        try {
+//            n1.setName(args[0]);
+//            n1.setIP(args[1]);
+//
+//            n1.setPort(Integer.parseInt(args[2]));
+//            n1.initializecommSocket(n1.getPort());
+//            //n1.setIP("localhost");
+//
+//        } catch (Exception e) {
+//            n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
+//        }
+
+        mainThread = new Thread(n1);
+        stdReadThread = new Thread(() -> {
+            System.out.println("std listener started...");
+            n1.readStdin();
+        });
+
+        //thread which listens on the joining
+        Thread listnerThread = new Thread(() -> {
+            System.out.println("** join listener on port " + n1.getPort() + " started..");
+            n1.joinListener();
+        });
+
+        htbThread = new Thread(() -> {
+            System.out.println("heart beat sender...");
+            try {
+                n1.sendHbt();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                n1.unreg();
+            }
+        });
+
+        mainThread.start();
+        stdReadThread.start();
+        listnerThread.start();
+        htbThread.start();
     }
 
 }
