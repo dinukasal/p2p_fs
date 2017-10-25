@@ -26,6 +26,7 @@ public class Node implements Runnable {
     int bs_port = 55555;
     int node_port = 5001; //if cli port argument is not given this port is used for node node comm
     String node_name = "n1";
+    int maxHops = 3; //This is the maximum hops count for a request
 
     InetAddress hostAddress;
     DatagramPacket dp;
@@ -193,18 +194,43 @@ public class Node implements Runnable {
 
                     if (hops < 0) {
                         //handle not found situation
-                        System.out.println("File is not found");
+                        String searchResultNotFoundCommand = " SEROK 0 "+ip_address+" "+node_port+" "+(maxHops-hops);
+                        searchResultNotFoundCommand = "00" + (searchResultNotFoundCommand.length() + 4) + searchResultNotFoundCommand;
+
+                        //send message to client who generated the search query
+                        sendMessage(searchResultNotFoundCommand, originatorIP, String.valueOf(originatorPort));
+
                     } else {
-                        boolean fileFound = false;
+                        int totalResults = 0;
+                        ArrayList<String> searchResults = new ArrayList<String>();
 
                         for (String fileNames : filesToStore.keySet()) {
-                            System.out.println(fileNames + " " + searchFile);
-                            if (searchFile.equals(fileNames)) {
-                                System.out.println("File is found!!!");
-                                fileFound = true;
+                            System.out.println(fileNames+" "+searchFile);
+                            if (fileNames.contains(searchFile)) {
+                                totalResults++;
+                                searchResults.add(fileNames);
                             }
                         }
-                        if (!fileFound) {
+                        //sending search results to originator
+                        if(totalResults > 0) {
+                            --hops;
+                            String searchResultOkCommand = " SEROK "+totalResults+ " "+ip_address+" "+node_port+" "+(maxHops-hops);
+
+                            //calculate message length and append resultant file names to message
+                            for(String fileName: searchResults) {
+                                searchResultOkCommand += " "+fileName;
+                            }
+
+                            if(searchResultOkCommand.length() < 96) {
+                                searchResultOkCommand = "00" + (searchResultOkCommand.length() + 4) + searchResultOkCommand;
+                            } else {
+                                searchResultOkCommand = "0" + (searchResultOkCommand.length() + 4) + searchResultOkCommand;
+                            }
+
+                            //send message to client who generated the search query
+                            sendMessage(searchResultOkCommand, originatorIP, String.valueOf(originatorPort));
+
+                        }else if(totalResults == 0) {
                             //select random node from neighbours
                             Random r = new Random();
                             Neighbour randomSuccessor = null;
@@ -219,14 +245,27 @@ public class Node implements Runnable {
                             }
 
                             //send search message to picked neighbour
-                            String searchCommand = " SER " + ip_address + " " + node_port + " Lord_of_the_Rings "
-                                    + --hops;
+                            String searchCommand = " SER " + originatorIP + " " + originatorPort + " Lord_of_the_Rings " + --hops;
+
                             searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
                             sendMessage(searchCommand, randomSuccessor.getIp(),
                                     String.valueOf(randomSuccessor.getPort()));
 
                             System.out.println("Request is forwareded!!!");
                         }
+                    }
+                } else if(command.equals("SEROK")) {
+                    int totalResults = Integer.parseInt(st.nextToken());
+                    String respondedNodeIP = st.nextToken();
+                    int respondedNodePort = Integer.parseInt(st.nextToken());
+                    int hops = Integer.parseInt(st.nextToken());
+
+                    System.out.println("Responded Node IP: " + respondedNodeIP);
+                    System.out.println("Responded Node Port: " + respondedNodePort);
+                    System.out.println("Total No. of Results: " + totalResults);
+                    System.out.println("No of Hops request went through: " + hops);
+                    for(int i = 0; i < totalResults; i++) {
+                        System.out.println(st.nextToken());
                     }
                 }
             } catch (Exception e) {
@@ -377,14 +416,15 @@ public class Node implements Runnable {
 
                     sendMessage("test from n1", "127.0.1.1", "5001");
 
-                } else if (outMessage.equals("ser")) {
+                } else if (outMessage.contains("ser")) {
+                    String searchQuery = outMessage.split(" ")[1];
 
                     //select random node from neighbours
                     Random r = new Random();
                     Neighbour randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
 
                     //send search message to picked neighbour
-                    String searchCommand = " SER " + ip_address + " " + node_port + " Lord_of_the_Rings 3";
+                    String searchCommand = " SER " + ip_address + " " + node_port + " " + searchQuery +" "+maxHops;
                     searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
                     sendMessage(searchCommand, randomSuccessor.getIp(), String.valueOf(randomSuccessor.getPort()));
 
