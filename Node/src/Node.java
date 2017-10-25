@@ -114,7 +114,7 @@ public class Node implements Runnable {
     }
 
     //Randomly pick two files from the file list.
-    public void initializeFiles() {
+    public void initializeFiles() throws IOException {
 
         // File name text to list
         Scanner sc = new Scanner(new File("FileNames.txt").toPath());
@@ -136,10 +136,9 @@ public class Node implements Runnable {
         ArrayList<String> keysAsArray = new ArrayList<String>(allFiles.keySet());
         for (int fileIndex : randomIndices) {
             filesToStore.put(keysAsArray.get(fileIndex), allFiles.get(keysAsArray.get(fileIndex)));
-
+            System.out.println(keysAsArray.get(fileIndex));
         }
-
-        filesToStore.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
+        //filesToStore.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
 
     }
 
