@@ -26,6 +26,7 @@ public class Node implements Runnable {
     int bs_port = 55555;
     int node_port = 5001; //if cli port argument is not given this port is used for node node comm
     String node_name = "n1";
+    int maxHops = 3; //This is the maximum hops count for a request
 
     InetAddress hostAddress;
     DatagramPacket dp;
@@ -37,17 +38,24 @@ public class Node implements Runnable {
     private final static Logger fLogger = Logger.getLogger(Node.class.getName());
 
     static Thread joinThread;
+
+    String portfileName="port";
     
+    //constructor
+
     public Node() throws Exception {
         s = new DatagramSocket();
         InetAddress IP = InetAddress.getLocalHost();
         ip_address = IP.getHostAddress();
         echo("IP address: " + ip_address);
         hostAddress = InetAddress.getByName(server_ip);
-        dp = new DatagramPacket(buf, buf.length);
-        //initiate files
-        initializeFiles();
+        try {
+            dp = new DatagramPacket(buf, buf.length);
+            //initiate files
+            initializeFiles();
+        } catch (Exception e) {
 
+        }
     }
 
     public void setName(String name) {
@@ -78,8 +86,8 @@ public class Node implements Runnable {
 
     public void serialize() {
         try (OutputStream file = new FileOutputStream("addresses.ser");
-             OutputStream buffer = new BufferedOutputStream(file);
-             ObjectOutput output = new ObjectOutputStream(buffer);) {
+                OutputStream buffer = new BufferedOutputStream(file);
+                ObjectOutput output = new ObjectOutputStream(buffer);) {
             output.writeObject(addressHistory);
         } catch (IOException ex) {
             fLogger.log(Level.SEVERE, "Cannot perform output.", ex);
@@ -88,8 +96,8 @@ public class Node implements Runnable {
 
     public void deserialize() {
         try (InputStream file = new FileInputStream("addresses.ser");
-             InputStream buffer = new BufferedInputStream(file);
-             ObjectInput input = new ObjectInputStream(buffer);) {
+                InputStream buffer = new BufferedInputStream(file);
+                ObjectInput input = new ObjectInputStream(buffer);) {
             //deserialize the List
             List<String> recoveredQuarks = (List<String>) input.readObject();
             //display its data
@@ -115,7 +123,6 @@ public class Node implements Runnable {
         allFiles.put("La_La_Land", new File("G:\\Films\\LR\\La_La_Land.mov"));
         allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
         allFiles.put("Spider_Man_1", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
-        allFiles.put("XXX", new File("G:\\Films\\XXX\\XXX.mov"));
 
         //generate 3 random indices to pick files from hashmap
         int[] randomIndices = new Random().ints(1, 7).distinct().limit(3).toArray();
@@ -173,7 +180,7 @@ public class Node implements Runnable {
                     sendJoinReq(reply, ip, port);
                     Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
                     joinedNodes.add(tempNeighbour);
-                    echo(Integer.toString(joinedNodes.size()));
+                    // echo(Integer.toString(joinedNodes.size()));
 
                 } else if (command.equals("JOINOK")) {
                     Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
@@ -190,7 +197,6 @@ public class Node implements Runnable {
                     sendMessage(reg, originatorIP, Integer.toString(originatorPort));
 
                 } else if (command.equals("hbtok")) {
-                    //todo
 
                 } else if (command.equals("SER")) {
 
@@ -201,18 +207,43 @@ public class Node implements Runnable {
 
                     if (hops < 0) {
                         //handle not found situation
-                        System.out.println("File is not found");
+                        String searchResultNotFoundCommand = " SEROK 0 "+ip_address+" "+node_port+" "+(maxHops-hops);
+                        searchResultNotFoundCommand = "00" + (searchResultNotFoundCommand.length() + 4) + searchResultNotFoundCommand;
+
+                        //send message to client who generated the search query
+                        sendMessage(searchResultNotFoundCommand, originatorIP, String.valueOf(originatorPort));
+
                     } else {
-                        boolean fileFound = false;
+                        int totalResults = 0;
+                        ArrayList<String> searchResults = new ArrayList<String>();
 
                         for (String fileNames : filesToStore.keySet()) {
-                            System.out.println(fileNames + " " + searchFile);
-                            if (searchFile.equals(fileNames)) {
-                                System.out.println("File is found!!!");
-                                fileFound = true;
+                            System.out.println(fileNames+" "+searchFile);
+                            if (fileNames.contains(searchFile)) {
+                                totalResults++;
+                                searchResults.add(fileNames);
                             }
                         }
-                        if (!fileFound) {
+                        //sending search results to originator
+                        if(totalResults > 0) {
+                            --hops;
+                            String searchResultOkCommand = " SEROK "+totalResults+ " "+ip_address+" "+node_port+" "+(maxHops-hops);
+
+                            //calculate message length and append resultant file names to message
+                            for(String fileName: searchResults) {
+                                searchResultOkCommand += " "+fileName;
+                            }
+
+                            if(searchResultOkCommand.length() < 96) {
+                                searchResultOkCommand = "00" + (searchResultOkCommand.length() + 4) + searchResultOkCommand;
+                            } else {
+                                searchResultOkCommand = "0" + (searchResultOkCommand.length() + 4) + searchResultOkCommand;
+                            }
+
+                            //send message to client who generated the search query
+                            sendMessage(searchResultOkCommand, originatorIP, String.valueOf(originatorPort));
+
+                        }else if(totalResults == 0) {
                             //select random node from neighbours
                             Random r = new Random();
                             Neighbour randomSuccessor = null;
@@ -227,8 +258,8 @@ public class Node implements Runnable {
                             }
 
                             //send search message to picked neighbour
-                            String searchCommand = " SER " + ip_address + " " + node_port + " Lord_of_the_Rings "
-                                    + --hops;
+                            String searchCommand = " SER " + originatorIP + " " + originatorPort + " Lord_of_the_Rings " + --hops;
+
                             searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
                             sendMessage(searchCommand, randomSuccessor.getIp(),
                                     String.valueOf(randomSuccessor.getPort()));
@@ -236,9 +267,25 @@ public class Node implements Runnable {
                             System.out.println("Request is forwareded!!!");
                         }
                     }
+                } else if(command.equals("SEROK")) {
+                    int totalResults = Integer.parseInt(st.nextToken());
+                    String respondedNodeIP = st.nextToken();
+                    int respondedNodePort = Integer.parseInt(st.nextToken());
+                    int hops = Integer.parseInt(st.nextToken());
+
+                    System.out.println("Responded Node IP: " + respondedNodeIP);
+                    System.out.println("Responded Node Port: " + respondedNodePort);
+                    System.out.println("Total No. of Results: " + totalResults);
+                    System.out.println("No of Hops request went through: " + hops);
+                    for(int i = 0; i < totalResults; i++) {
+                        System.out.println(st.nextToken());
+                    }
                 }
             } catch (Exception e) {
                 System.out.println(e);
+                for (int i = 0; i < 3; i++) {   //reconnecting on the port if an eception occurs
+                    initializecommSocket(node_port);
+                }
             }
         }
 
@@ -284,7 +331,7 @@ public class Node implements Runnable {
             int no_nodes = Integer.parseInt(st.nextToken());
 
             // Loop twice if no_nodes == 2
-            while (no_nodes > 0) {
+            while (no_nodes > 0 && no_nodes<21) {
 
                 String join_ip = st.nextToken();
                 String join_port = st.nextToken();
@@ -297,6 +344,13 @@ public class Node implements Runnable {
                     sendJoinReq(join_msg, join_ip, Integer.parseInt(join_port));
                     no_nodes -= 1;
                 }
+            }
+
+            if(no_nodes==9999){
+                echo("There's an error in the command");
+            }else if(no_nodes==9998){
+                unreg();
+                doREG();
             }
 
         }
@@ -328,14 +382,15 @@ public class Node implements Runnable {
 
                     sendMessage("test from n1", "127.0.1.1", "5001");
 
-                } else if (outMessage.equals("ser")) {
+                } else if (outMessage.contains("ser")) {
+                    String searchQuery = outMessage.split(" ")[1];
 
                     //select random node from neighbours
                     Random r = new Random();
                     Neighbour randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
 
                     //send search message to picked neighbour
-                    String searchCommand = " SER " + ip_address + " " + node_port + " Lord_of_the_Rings 3";
+                    String searchCommand = " SER " + ip_address + " " + node_port + " " + searchQuery +" "+maxHops;
                     searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
                     sendMessage(searchCommand, randomSuccessor.getIp(), String.valueOf(randomSuccessor.getPort()));
 
@@ -349,8 +404,12 @@ public class Node implements Runnable {
 
     }
 
-    public void startNode() throws Exception {
+    public void startNode() throws Exception {  //node initializer
         try {
+            // String last_port=readPort();
+            // echo(last_port);
+            // int last_port=Integer.parseInt(readPort());
+            // unregPort(Integer.parseInt(last_port));
 
             doREG();
 
@@ -370,7 +429,89 @@ public class Node implements Runnable {
         }
     }
 
+    //configurations -- port 
+    public void writePort(int port){ //make port persistent
+        try {
+            // Assume default encoding.
+            FileWriter fileWriter =
+                new FileWriter(portfileName);
+
+            // Always wrap FileWriter in BufferedWriter.
+            BufferedWriter bufferedWriter =
+                new BufferedWriter(fileWriter);
+
+            // Note that write() does not automatically
+            // append a newline character.
+            bufferedWriter.write(Integer.toString(port));
+
+            // Always close files.
+            bufferedWriter.close();
+        }
+        catch(IOException ex) {
+            System.out.println(
+                "Error writing to file '"
+                + portfileName + "'");
+            // Or we could just do this:
+            // ex.printStackTrace();
+        }
+    }
+
+    public String readPort(){
+        try {
+			File file = new File("port");
+			FileReader fileReader = new FileReader(file);
+			BufferedReader bufferedReader = new BufferedReader(fileReader);
+			StringBuffer stringBuffer = new StringBuffer();
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				stringBuffer.append(line);
+                return stringBuffer.toString();
+				// stringBuffer.append("\n");
+			}
+			fileReader.close();
+			System.out.println("Contents of file:");
+            System.out.println(stringBuffer.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+        }
+        /*
+
+        try {
+            // Use this for reading the data.
+            byte[] buffer = new byte[1000];
+
+            FileInputStream inputStream = 
+                new FileInputStream(portfileName);
+
+            int total = 0;
+            int nRead = 0;
+            while((nRead = inputStream.read(buffer)) != -1) {
+                System.out.println(new String(buffer));
+                total += nRead;
+                return new String(buffer);
+            }   
+
+            inputStream.close();        
+            // System.out.println("Read " + total + " bytes");
+        }
+        catch(FileNotFoundException ex) {
+            System.out.println(
+                "Unable to open file '" + 
+                portfileName + "'");                
+        }
+        catch(IOException ex) {
+            System.out.println(
+                "Error reading file '" 
+                + portfileName + "'");                  
+        }
+        */
+        return "-1";
+    }
+
     public void doREG() {
+        Random r = new Random();
+        node_port= Math.abs(r.nextInt())%6000+3000;
+        writePort(node_port);
         String reg = " REG " + ip_address + " " + node_port + " " + node_name; //node_port?
         reg = "00" + (reg.length() + 4) + reg;
 
@@ -379,6 +520,12 @@ public class Node implements Runnable {
 
     public void unreg() {
         String reg = " UNREG " + ip_address + " " + node_port + " " + node_name; //node_port?
+        reg = "00" + (reg.length() + 4) + reg;
+        sendMessage(reg, server_ip, Integer.toString(bs_port));
+    }
+
+    public void unregPort(int port) {
+        String reg = " UNREG " + ip_address + " " + port + " " + node_name; //node_port?
         reg = "00" + (reg.length() + 4) + reg;
         sendMessage(reg, server_ip, Integer.toString(bs_port));
     }
@@ -428,17 +575,17 @@ public class Node implements Runnable {
     public static void main(String args[]) throws Exception {
 
         Node n1 = new Node();
-        try {
-            n1.setName(args[0]);
-            n1.setIP(args[1]);
-
-            n1.setPort(Integer.parseInt(args[2]));
-            n1.initializecommSocket(n1.getPort());
-            //n1.setIP("localhost");
-
-        } catch (Exception e) {
-            n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
-        }
+//        try {
+//            n1.setName(args[0]);
+//            n1.setIP(args[1]);
+//
+//            n1.setPort(Integer.parseInt(args[2]));
+//            n1.initializecommSocket(n1.getPort());
+//            //n1.setIP("localhost");
+//
+//        } catch (Exception e) {
+//            n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
+//        }
 
         mainThread = new Thread(n1);
         stdReadThread = new Thread(() -> {
