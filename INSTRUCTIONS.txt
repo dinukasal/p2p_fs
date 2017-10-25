@@ -28,5 +28,5 @@ Needed commands are in 'one_node.sh' for easy execution in Linux terminal.
 
 
 *** However for the ease of modeling multiple nodes there's 'node.sh' script.
-    This will boot up 5 Node servers for testing purpose
+    This will spin up 5 Nodes
     (However it should be noted that 'xterm' used here and might not be functioning in all terminals.)
