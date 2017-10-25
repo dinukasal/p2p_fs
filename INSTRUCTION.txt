@@ -1,0 +1,30 @@
+This application consists of two main servers: 
+    1. Bootstrap server
+    2. Node servers
+
+--- BOOTSTRAP SERVER ---
+
+In order to run bootstrap server relevant .java files are to be compliled from ./Server/src
+Needed commands to execute are noted in 'server.sh'. It's easier to just run this script in Linux terminal.
+        
+    _Script Code_
+        javac Server/src/Neighbour.java  Server/src/BootstrapServer.java -d Server
+        cd Server && java BootstrapServer
+
+
+--- NODE SERVERS ---
+
+Relevant files to be compiled are stored in ./Node/src
+Needed commands are in 'one_node.sh' for easy execution in Linux terminal.
+
+    _Script Code_
+        javac Node/src/Neighbour.java Node/src/Node.java -d Node
+        cd Node && java Node
+
+
+
+
+
+*** However for the ease of modeling multiple nodes there's 'node.sh' script.
+    This will boot up 5 Node servers for testing purpose
+    (However it should be noted that 'xterm' used here and might not be functioning in all terminals.)

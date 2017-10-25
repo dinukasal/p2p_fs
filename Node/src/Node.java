@@ -114,13 +114,18 @@ public class Node implements Runnable {
     //Randomly pick two files from the file list.
     public void initializeFiles() {
 
+        // File name text to list
+        Scanner sc = new Scanner(new File("FileNames.txt").toPath());
+        List<String> allFilesList = new ArrayList<String>();
+        while (sc.hasNextLine()) {
+            allFilesList.add(sc.nextLine());
+        }
+
         HashMap<String, File> allFiles = new HashMap<String, File>();
-        //allFiles.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
-        allFiles.put("Harry_Porter_1", new File("G:\\Films\\HP\\Harry_Porter_1.mov"));
-        allFiles.put("Fast_and_Furious", new File("G:\\Films\\FF\\Fast_and_Furious.mov"));
-        allFiles.put("La_La_Land", new File("G:\\Films\\LR\\La_La_Land.mov"));
-        allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
-        allFiles.put("Spider_Man_1", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
+        // Add files list to hashmap
+        for(int i=0; i < allFilesList.size(); i++){
+            allFiles.put( allFilesList.get(i) , new File("C:\\" + allFilesList.get(i) ));
+        }
 
         //generate 3 random indices to pick files from hashmap
         int[] randomIndices = new Random().ints(1, 7).distinct().limit(3).toArray();
