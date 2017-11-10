@@ -1,5 +1,5 @@
 
-//package Node.src;
+package Node.src;
 
 import java.io.*;
 import java.net.DatagramPacket;
@@ -113,7 +113,7 @@ public class Node implements Runnable {
     public void initializeFiles() {
 
         HashMap<String, File> allFiles = new HashMap<String, File>();
-        //allFiles.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
+        allFiles.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
         allFiles.put("Harry_Porter_1", new File("G:\\Films\\HP\\Harry_Porter_1.mov"));
         allFiles.put("Fast_and_Furious", new File("G:\\Films\\FF\\Fast_and_Furious.mov"));
         allFiles.put("La_La_Land", new File("G:\\Films\\LR\\La_La_Land.mov"));
@@ -128,10 +128,10 @@ public class Node implements Runnable {
         ArrayList<String> keysAsArray = new ArrayList<String>(allFiles.keySet());
         for (int fileIndex : randomIndices) {
             filesToStore.put(keysAsArray.get(fileIndex), allFiles.get(keysAsArray.get(fileIndex)));
-
+            System.out.println(keysAsArray.get(fileIndex));
         }
 
-        filesToStore.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
+        //filesToStore.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
 
     }
 
