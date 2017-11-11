@@ -1,4 +1,4 @@
-javac Server/src/Neighbour.java  Server/src/BootstrapServer.java -d Server
+javac Server/src/Neighbour.java  Server/src/BootstrapServer.java
 #javac Node/src/Node.java -d nodes
 echo 'Server and Node compiled! server will execute now'
-cd Server && java BootstrapServer
+java Server/src/BootstrapServer
