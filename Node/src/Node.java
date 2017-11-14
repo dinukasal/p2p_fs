@@ -20,8 +20,8 @@ import java.util.logging.*;
 public class Node implements Runnable {
     private DatagramSocket s, node2, node3;
     private static Thread mainThread, stdReadThread, htbThread;
-    private String ip_address = "";
-    private String server_ip = "localhost";
+    private String ip_address = "192.168.44.236";
+    private String server_ip = "10.8.97.84";
     byte[] buf = new byte[1000];
     int bs_port = 55555;
     int node_port = 5001; //if cli port argument is not given this port is used for node node comm
