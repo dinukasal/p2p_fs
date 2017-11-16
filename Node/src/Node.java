@@ -336,7 +336,7 @@ public class Node implements Runnable {
 
                 if (Integer.parseInt(join_port) != node_port) {
                     // Send JOIN request => 'length JOIN IP_address port_no'
-                    String join = " JOIN " + join_ip + " " + join_port;
+                    String join = " JOIN " + ip_address + " " + node_port;
                     String join_msg = "00" + (join.length() + 4) + join;
 
                     sendJoinReq(join_msg, join_ip, Integer.parseInt(join_port));
