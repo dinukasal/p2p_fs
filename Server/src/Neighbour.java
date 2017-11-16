@@ -1,4 +1,4 @@
-//package Server.src;
+package Server.src;
 
 class Neighbour{
 	private String ip;

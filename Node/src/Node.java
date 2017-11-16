@@ -1,6 +1,7 @@
 
 package Node.src;
 
+import com.sun.org.apache.xpath.internal.SourceTree;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -15,8 +16,8 @@ import java.util.logging.*;
 public class Node implements Runnable {
     private DatagramSocket s, node2, node3;
     private static Thread mainThread, stdReadThread;
-    private String ip_address = "";
-    private String server_ip = "localhost";
+    private String ip_address = "127.0.0.1";
+    private String server_ip = "54.149.65.124";
     byte[] buf = new byte[1000];
     int bs_port = 55555;
     int node_port = 5001; //if cli port argument is not given this port is used for node node comm
@@ -37,7 +38,7 @@ public class Node implements Runnable {
     public Node() throws Exception {
         s = new DatagramSocket();
         InetAddress IP = InetAddress.getLocalHost();
-        ip_address = IP.getHostAddress();
+        //ip_address = IP.getHostAddress();
         echo("IP address: " + ip_address);
         hostAddress = InetAddress.getByName(server_ip);
         try {
@@ -114,7 +115,7 @@ public class Node implements Runnable {
         allFiles.put("La_La_Land", new File("G:\\Films\\LR\\La_La_Land.mov"));
         allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
         allFiles.put("Spider_Man_1", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
-        allFiles.put("XXX", new File("G:\\Films\\XXX\\XXX.mov"));
+        allFiles.put("abc", new File("G:\\Films\\abc\\abc.mov"));
 
         //generate 3 random indices to pick files from hashmap
         int[] randomIndices = new Random().ints(1, 7).distinct().limit(3).toArray();
@@ -260,6 +261,8 @@ public class Node implements Runnable {
                     for(int i = 0; i < totalResults; i++) {
                         System.out.println(st.nextToken());
                     }
+                }else{
+                    System.out.println("Received message:"+str);
                 }
             } catch (Exception e) {
                 System.out.println(e);
@@ -347,19 +350,19 @@ public class Node implements Runnable {
 
         
         // n1.setPort();
-        /*
+        
         try {
-            n1.setName(args[0]);
-            n1.setIP(args[1]);
+            //n1.setName(args[0]);
+            n1.setIP(args[0]);
 
             // n1.setPort(Integer.parseInt(args[2]));
-            n1.initializecommSocket(n1.getPort());
+        //    n1.initializecommSocket(n1.getPort());
             //n1.setIP("localhost");
 
         } catch (Exception e) {
-            n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
+            //n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
         }
-        */
+        
 
         mainThread = new Thread(n1);
         stdReadThread = new Thread(new Runnable() {

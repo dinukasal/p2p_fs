@@ -1,3 +1,3 @@
-javac Node/src/Neighbour.java Node/src/Node.java -d Node
+javac Node/src/Neighbour.java Node/src/Node.java 
 echo 'Node build and now running..'
-cd Node && java Node
+java Node/src/Node
