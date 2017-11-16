@@ -7,14 +7,9 @@ import java.net.DatagramSocket;
 import java.util.*;
 import java.net.InetAddress;
 
-import java.util.Scanner;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.Random;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.io.File;
-import java.util.*;
 import java.util.logging.*;
 
 public class Node implements Runnable {
@@ -243,7 +238,7 @@ public class Node implements Runnable {
                             }
 
                             //send search message to picked neighbour
-                            String searchCommand = " SER " + originatorIP + " " + originatorPort + " Lord_of_the_Rings " + --hops;
+                            String searchCommand = " SER " + originatorIP + " " + originatorPort + " " + searchFile + " " + --hops;
 
                             searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
                             sendMessage(searchCommand, randomSuccessor.getIp(),
@@ -417,14 +412,31 @@ public class Node implements Runnable {
                 } else if (outMessage.contains("ser")) {
                     String searchQuery = outMessage.split(" ")[1];
 
-                    //select random node from neighbours
-                    Random r = new Random();
-                    Neighbour randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
+                    int totalResults = 0;
+                    ArrayList<String> searchResults = new ArrayList<String>();
 
-                    //send search message to picked neighbour
-                    String searchCommand = " SER " + ip_address + " " + node_port + " " + searchQuery +" "+maxHops;
-                    searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
-                    sendMessage(searchCommand, randomSuccessor.getIp(), String.valueOf(randomSuccessor.getPort()));
+                    for (String fileNames : filesToStore.keySet()) {
+                        System.out.println(fileNames+" "+searchQuery);
+                        if (fileNames.contains(searchQuery)) {
+                            totalResults++;
+                            searchResults.add(fileNames);
+                        }
+                    }
+
+                    //sending search results to originator
+                    if(totalResults == 0) {
+
+                        //select random node from neighbours
+                        Random r = new Random();
+                        Neighbour randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
+
+                        //send search message to picked neighbour
+                        String searchCommand = " SER " + ip_address + " " + node_port + " " + searchQuery + " " + maxHops;
+                        searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
+                        sendMessage(searchCommand, randomSuccessor.getIp(), String.valueOf(randomSuccessor.getPort()));
+                    } else {
+                        System.out.println("File found in my PC!!!");
+                    }
 
                 } else {
                     echo("Enter valid command");
