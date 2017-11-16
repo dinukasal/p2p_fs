@@ -17,7 +17,7 @@ public class Node implements Runnable {
     private DatagramSocket s, node2, node3;
     private static Thread mainThread, stdReadThread;
     private String ip_address = "127.0.0.1";
-    private String server_ip = "54.149.65.124";
+    private String server_ip = "54.191.26.128";
     byte[] buf = new byte[1000];
     int bs_port = 55555;
     int node_port = 5001; //if cli port argument is not given this port is used for node node comm
