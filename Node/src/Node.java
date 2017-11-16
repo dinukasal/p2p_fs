@@ -165,7 +165,7 @@ public class Node implements Runnable {
             }
             byte[] data = incoming.getData();
             String str = new String(data, 0, incoming.getLength());
-            echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
+            // echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + str);
 
             StringTokenizer st = new StringTokenizer(str, " ");
             String command = "", length = "";
@@ -181,10 +181,11 @@ public class Node implements Runnable {
                 if (command.equals("JOIN")) {
                     String reply = " JOINOK 0";
                     reply = "00" + (reply.length() + 2) + reply;
-
-                    initializecommSocket(port);
-                    sendJoinReq(reply, ip, port);
-                    Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
+                    String neighbour_ip = st.nextToken();
+                    String neighbour_port =  st.nextToken();
+                    // initializecommSocket(neighbour_port);
+                    sendMessage(reply, ip, neighbour_port);
+                    Neighbour tempNeighbour = new Neighbour(ip,Integer.parseInt(neighbour_port), "neighbour");
                     joinedNodes.add(tempNeighbour);
                     // echo(Integer.toString(joinedNodes.size()));
 
@@ -455,6 +456,11 @@ public class Node implements Runnable {
                         System.out.println("File found in my PC!!!");
                     }
 
+                } else if (outMessage.contains("nodes")) {
+                    for(int i=0;i<joinedNodes.size();i++){
+                        System.out.println(joinedNodes.get(i));
+                    }
+
                 } else {
                     echo("Enter valid command");
                 }
@@ -504,8 +510,8 @@ public class Node implements Runnable {
 
     public void sendMessage(String outString, String outAddress, String outPort) {
         try {
-
-            buf = outString.getBytes();
+            
+            byte[] buf = outString.getBytes();
             DatagramPacket out = new DatagramPacket(buf, buf.length, InetAddress.getByName(outAddress),
                     Integer.parseInt(outPort));
 
