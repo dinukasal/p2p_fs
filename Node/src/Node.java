@@ -146,6 +146,7 @@ public class Node implements Runnable {
         DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
         initializecommSocket(node_port);
         while (true) {
+            System.out.println("BBBBBB");
             try {
                 node2.receive(incoming);
             } catch (Exception e) {
@@ -249,18 +250,19 @@ public class Node implements Runnable {
                         }
                     }
                 } else if(command.equals("SEROK")) {
-                    int totalResults = Integer.parseInt(st.nextToken());
-                    String respondedNodeIP = st.nextToken();
-                    int respondedNodePort = Integer.parseInt(st.nextToken());
-                    int hops = Integer.parseInt(st.nextToken());
-
-                    System.out.println("Responded Node IP: " + respondedNodeIP);
-                    System.out.println("Responded Node Port: " + respondedNodePort);
-                    System.out.println("Total No. of Results: " + totalResults);
-                    System.out.println("No of Hops request went through: " + hops);
-                    for(int i = 0; i < totalResults; i++) {
-                        System.out.println(st.nextToken());
-                    }
+                    System.out.println("AAAAAAAAAA");
+//                    int totalResults = Integer.parseInt(st.nextToken());
+//                    String respondedNodeIP = st.nextToken();
+//                    int respondedNodePort = Integer.parseInt(st.nextToken());
+//                    int hops = Integer.parseInt(st.nextToken());
+//
+//                    System.out.println("Responded Node IP: " + respondedNodeIP);
+//                    System.out.println("Responded Node Port: " + respondedNodePort);
+//                    System.out.println("Total No. of Results: " + totalResults);
+//                    System.out.println("No of Hops request went through: " + hops);
+//                    for(int i = 0; i < totalResults; i++) {
+//                        System.out.println(st.nextToken());
+//                    }
                 }else{
                     System.out.println("Received message:"+str);
                 }
