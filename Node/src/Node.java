@@ -1,6 +1,7 @@
 
 package Node.src;
 
+import com.sun.org.apache.xpath.internal.SourceTree;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -265,6 +266,8 @@ public class Node implements Runnable {
                     for(int i = 0; i < totalResults; i++) {
                         System.out.println(st.nextToken());
                     }
+                }else{
+                    System.out.println("Received message:"+str);
                 }
             } catch (Exception e) {
                 System.out.println(e);
