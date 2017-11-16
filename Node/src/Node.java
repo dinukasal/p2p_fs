@@ -179,10 +179,10 @@ public class Node implements Runnable {
                 System.out.println("Commands comming...");
 
                 if (command.equals("JOIN")) {
-                    String reply = " JOINOK 0";
-                    reply = "00" + (reply.length() + 2) + reply;
                     String neighbour_ip = st.nextToken();
                     String neighbour_port =  st.nextToken();
+                    String reply = " JOINOK "+ip_address+" "+node_port;
+                    reply = "00" + (reply.length() + 2) + reply;
                     // initializecommSocket(neighbour_port);
                     sendMessage(reply, ip, neighbour_port);
                     Neighbour tempNeighbour = new Neighbour(ip,Integer.parseInt(neighbour_port), "neighbour");
@@ -190,7 +190,9 @@ public class Node implements Runnable {
                     // echo(Integer.toString(joinedNodes.size()));
 
                 } else if (command.equals("JOINOK")) {
-                    Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
+                    String neighbour_ip = st.nextToken();
+                    String neighbour_port =  st.nextToken();
+                    Neighbour tempNeighbour = new Neighbour(ip, Integer.parseInt(neighbour_port), "neighbour");
                     joinedNodes.add(tempNeighbour);
                     // echo(Integer.toString(joinedNodes.size()));
                 } else if (command.equals("SER")) {
