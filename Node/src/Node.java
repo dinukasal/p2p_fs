@@ -20,7 +20,7 @@ import java.util.logging.*;
 public class Node implements Runnable {
     private DatagramSocket s, node2, node3;
     private static Thread mainThread, stdReadThread;
-    private String ip_address = "192.168.44.236";
+    private String ip_address = "54.149.65.124";
     private String server_ip = "10.8.112.6";
     byte[] buf = new byte[1000];
     int bs_port = 55555;
