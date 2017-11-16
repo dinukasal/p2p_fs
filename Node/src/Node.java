@@ -119,7 +119,7 @@ public class Node implements Runnable {
         allFiles.put("La_La_Land", new File("G:\\Films\\LR\\La_La_Land.mov"));
         allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
         allFiles.put("Spider_Man_1", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
-        allFiles.put("XXX", new File("G:\\Films\\XXX\\XXX.mov"));
+        allFiles.put("abc", new File("G:\\Films\\abc\\abc.mov"));
 
         //generate 3 random indices to pick files from hashmap
         int[] randomIndices = new Random().ints(1, 7).distinct().limit(3).toArray();
@@ -352,19 +352,19 @@ public class Node implements Runnable {
 
         
         // n1.setPort();
-        /*
+        
         try {
-            n1.setName(args[0]);
-            n1.setIP(args[1]);
+            //n1.setName(args[0]);
+            n1.setIP(args[0]);
 
             // n1.setPort(Integer.parseInt(args[2]));
-            n1.initializecommSocket(n1.getPort());
+        //    n1.initializecommSocket(n1.getPort());
             //n1.setIP("localhost");
 
         } catch (Exception e) {
-            n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
+            //n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
         }
-        */
+        
 
         mainThread = new Thread(n1);
         stdReadThread = new Thread(new Runnable() {
