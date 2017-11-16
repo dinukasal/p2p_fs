@@ -17,7 +17,7 @@ public class Node implements Runnable {
     private DatagramSocket s, node2, node3;
     private static Thread mainThread, stdReadThread;
     private String ip_address = "127.0.0.1";
-    private String server_ip = "54.191.26.128";
+    private String server_ip = "localhost";
     byte[] buf = new byte[1000];
     int bs_port = 55555;
     int node_port = 5001; //if cli port argument is not given this port is used for node node comm
@@ -49,7 +49,9 @@ public class Node implements Runnable {
 
         }
     }
-
+    public void setServer(String server) {
+        server_ip = server;
+    }
     public void setName(String name) {
         node_name = name;
     }
@@ -116,9 +118,16 @@ public class Node implements Runnable {
         allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
         allFiles.put("Spider_Man_1", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
         allFiles.put("abc", new File("G:\\Films\\abc\\abc.mov"));
+        allFiles.put("test1", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
+        allFiles.put("test2", new File("G:\\Films\\HP\\Harry_Porter_1.mov"));
+        allFiles.put("3", new File("G:\\Films\\FF\\Fast_and_Furious.mov"));
+        allFiles.put("4", new File("G:\\Films\\LR\\La_La_Land.mov"));
+        allFiles.put("5", new File("G:\\Films\\Transformers\\Transformers.mov"));
+        allFiles.put("6", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
+        allFiles.put("7", new File("G:\\Films\\abc\\abc.mov"));
 
         //generate 3 random indices to pick files from hashmap
-        int[] randomIndices = new Random().ints(1, 7).distinct().limit(3).toArray();
+        int[] randomIndices = new Random().ints(1, 13).distinct().limit(3).toArray();
 
         //pick files randomly
         ArrayList<String> keysAsArray = new ArrayList<String>(allFiles.keySet());
@@ -127,7 +136,7 @@ public class Node implements Runnable {
             System.out.println(keysAsArray.get(fileIndex));
         }
 
-        System.out.println("");
+        System.out.println();
 
         //filesToStore.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
 
@@ -148,7 +157,7 @@ public class Node implements Runnable {
         DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
         initializecommSocket(node_port);
         while (true) {
-            System.out.println("BBBBBB");
+            System.out.println("BBBBB");
             try {
                 node2.receive(incoming);
             } catch (Exception e) {
@@ -252,7 +261,7 @@ public class Node implements Runnable {
                         }
                     }
                 } else if(command.equals("SEROK")) {
-                    System.out.println("AAAAAAAAAA");
+                    System.out.println("AAAAA");
 //                    int totalResults = Integer.parseInt(st.nextToken());
 //                    String respondedNodeIP = st.nextToken();
 //                    int respondedNodePort = Integer.parseInt(st.nextToken());
@@ -358,7 +367,7 @@ public class Node implements Runnable {
         try {
             //n1.setName(args[0]);
             n1.setIP(args[0]);
-
+            n1.setServer(args[1]);
             // n1.setPort(Integer.parseInt(args[2]));
         //    n1.initializecommSocket(n1.getPort());
             //n1.setIP("localhost");
