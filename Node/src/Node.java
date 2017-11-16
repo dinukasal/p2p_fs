@@ -157,7 +157,7 @@ public class Node implements Runnable {
         DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
         initializecommSocket(node_port);
         while (true) {
-            System.out.println("BBBBB");
+
             try {
                 node2.receive(incoming);
             } catch (Exception e) {
@@ -176,6 +176,7 @@ public class Node implements Runnable {
                 length = st.nextToken();
                 command = st.nextToken();
                 echo("command: " + command);
+                System.out.println("Commands comming...");
 
                 if (command.equals("JOIN")) {
                     String reply = " JOINOK 0";
@@ -261,7 +262,7 @@ public class Node implements Runnable {
                         }
                     }
                 } else if(command.equals("SEROK")) {
-                    System.out.println("AAAAA");
+                    System.out.println("SEROK Received");
 //                    int totalResults = Integer.parseInt(st.nextToken());
 //                    String respondedNodeIP = st.nextToken();
 //                    int respondedNodePort = Integer.parseInt(st.nextToken());
@@ -367,7 +368,7 @@ public class Node implements Runnable {
         try {
             //n1.setName(args[0]);
             n1.setIP(args[0]);
-            n1.setServer(args[1]);
+            //n1.setServer(args[1]);
             // n1.setPort(Integer.parseInt(args[2]));
         //    n1.initializecommSocket(n1.getPort());
             //n1.setIP("localhost");
