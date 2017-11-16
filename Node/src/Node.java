@@ -368,7 +368,7 @@ public class Node implements Runnable {
         try {
             //n1.setName(args[0]);
             n1.setIP(args[0]);
-            //n1.setServer(args[1]);
+            n1.setServer(args[1]);
             // n1.setPort(Integer.parseInt(args[2]));
         //    n1.initializecommSocket(n1.getPort());
             //n1.setIP("localhost");
