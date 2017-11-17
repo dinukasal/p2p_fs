@@ -124,12 +124,10 @@ public class Node implements Runnable {
         }
 
         HashMap<String, File> allFiles = new HashMap<String, File>();
-<<<<<<< HEAD
         // Add files list to hashmap
         for(int i=0; i < allFilesList.size(); i++){
             allFiles.put( allFilesList.get(i) , new File("C:\\" + allFilesList.get(i) ));
         }
-=======
         allFiles.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
         allFiles.put("Harry_Porter_1", new File("G:\\Films\\HP\\Harry_Porter_1.mov"));
         allFiles.put("Fast_and_Furious", new File("G:\\Films\\FF\\Fast_and_Furious.mov"));
@@ -137,10 +135,9 @@ public class Node implements Runnable {
         allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
         allFiles.put("Spider_Man_1", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
         allFiles.put("XXX", new File("G:\\Films\\XXX\\XXX.mov"));
->>>>>>> p2pv2
 
         //generate 3 random indices to pick files from hashmap
-        int[] randomIndices = new Random().ints(1, 7).distinct().limit(3).toArray();
+        int[] randomIndices = new Random().ints(1, allFiles.size()).distinct().limit(3).toArray();
 
         //pick files randomly
         ArrayList<String> keysAsArray = new ArrayList<String>(allFiles.keySet());
@@ -148,10 +145,7 @@ public class Node implements Runnable {
             filesToStore.put(keysAsArray.get(fileIndex), allFiles.get(keysAsArray.get(fileIndex)));
             System.out.println(keysAsArray.get(fileIndex));
         }
-<<<<<<< HEAD
-=======
 
->>>>>>> p2pv2
         //filesToStore.put("Lord_of_the_Rings", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
 
     }
