@@ -1,6 +1,7 @@
 
 package Node.src;
 
+import com.sun.org.apache.xpath.internal.SourceTree;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -46,7 +47,7 @@ public class Node implements Runnable {
     public Node() throws Exception {
         s = new DatagramSocket();
         InetAddress IP = InetAddress.getLocalHost();
-        ip_address = IP.getHostAddress();
+        //ip_address = IP.getHostAddress();
         echo("IP address: " + ip_address);
         hostAddress = InetAddress.getByName(server_ip);
         try {
@@ -57,7 +58,9 @@ public class Node implements Runnable {
 
         }
     }
-
+    public void setServer(String server) {
+        server_ip = server;
+    }
     public void setName(String name) {
         node_name = name;
     }
@@ -114,14 +117,7 @@ public class Node implements Runnable {
     }
 
     //Randomly pick two files from the file list.
-    public void initializeFiles() throws IOException {
-
-        // File name text to list
-        Scanner sc = new Scanner(new File("FileNames.txt").toPath());
-        List<String> allFilesList = new ArrayList<String>();
-        while (sc.hasNextLine()) {
-            allFilesList.add(sc.nextLine());
-        }
+    public void initializeFiles() {
 
         HashMap<String, File> allFiles = new HashMap<String, File>();
         // Add files list to hashmap
@@ -134,7 +130,14 @@ public class Node implements Runnable {
         allFiles.put("La_La_Land", new File("G:\\Films\\LR\\La_La_Land.mov"));
         allFiles.put("Transformers", new File("G:\\Films\\Transformers\\Transformers.mov"));
         allFiles.put("Spider_Man_1", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
-        allFiles.put("XXX", new File("G:\\Films\\XXX\\XXX.mov"));
+        allFiles.put("abc", new File("G:\\Films\\abc\\abc.mov"));
+        allFiles.put("test1", new File("G:\\Films\\LR\\Lord_of_the_Rings.mov"));
+        allFiles.put("test2", new File("G:\\Films\\HP\\Harry_Porter_1.mov"));
+        allFiles.put("3", new File("G:\\Films\\FF\\Fast_and_Furious.mov"));
+        allFiles.put("4", new File("G:\\Films\\LR\\La_La_Land.mov"));
+        allFiles.put("5", new File("G:\\Films\\Transformers\\Transformers.mov"));
+        allFiles.put("6", new File("G:\\Films\\SP\\Spider_Man_1.mov"));
+        allFiles.put("7", new File("G:\\Films\\abc\\abc.mov"));
 
         //generate 3 random indices to pick files from hashmap
         int[] randomIndices = new Random().ints(1, allFiles.size()).distinct().limit(3).toArray();
@@ -165,6 +168,7 @@ public class Node implements Runnable {
         DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
         initializecommSocket(node_port);
         while (true) {
+
             try {
                 node2.receive(incoming);
             } catch (Exception e) {
@@ -184,21 +188,24 @@ public class Node implements Runnable {
             try {
                 length = st.nextToken();
                 command = st.nextToken();
-                if (!command.equals("hbt") && !command.equals("hbtok"))
-                    echo("command: " + command);
+                echo("command: " + command);
+                System.out.println("Commands comming...");
 
                 if (command.equals("JOIN")) {
-                    String reply = " JOINOK 0";
+                    String neighbour_ip = st.nextToken();
+                    String neighbour_port =  st.nextToken();
+                    String reply = " JOINOK "+ip_address+" "+node_port;
                     reply = "00" + (reply.length() + 2) + reply;
-
-                    initializecommSocket(port);
-                    sendJoinReq(reply, ip, port);
-                    Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
+                    // initializecommSocket(neighbour_port);
+                    sendMessage(reply, ip, neighbour_port);
+                    Neighbour tempNeighbour = new Neighbour(ip,Integer.parseInt(neighbour_port), "neighbour");
                     joinedNodes.add(tempNeighbour);
                     // echo(Integer.toString(joinedNodes.size()));
 
                 } else if (command.equals("JOINOK")) {
-                    Neighbour tempNeighbour = new Neighbour(ip, port, "neighbour");
+                    String neighbour_ip = st.nextToken();
+                    String neighbour_port =  st.nextToken();
+                    Neighbour tempNeighbour = new Neighbour(ip, Integer.parseInt(neighbour_port), "neighbour");
                     joinedNodes.add(tempNeighbour);
                     echo(Integer.toString(joinedNodes.size()));
                 } else if (command.equals("hbt")) {
@@ -235,14 +242,14 @@ public class Node implements Runnable {
                         ArrayList<String> searchResults = new ArrayList<String>();
 
                         for (String fileNames : filesToStore.keySet()) {
-                            System.out.println(fileNames + " " + searchFile);
+                            System.out.println(fileNames+" "+searchFile);
                             if (fileNames.contains(searchFile)) {
                                 totalResults++;
                                 searchResults.add(fileNames);
                             }
                         }
                         //sending search results to originator
-                        if (totalResults > 0) {
+                        if(totalResults > 0) {
                             --hops;
                             String searchResultOkCommand = " SEROK " + totalResults + " " + ip_address + " " + node_port
                                     + " " + (maxHops - hops);
@@ -384,6 +391,53 @@ public class Node implements Runnable {
         }
     }
 
+    public static void main(String args[]) throws Exception {
+
+        Node n1 = new Node();
+
+        
+        // n1.setPort();
+        
+        try {
+            //n1.setName(args[0]);
+            n1.setIP(args[0]);
+            n1.setServer(args[1]);
+            // n1.setPort(Integer.parseInt(args[2]));
+        //    n1.initializecommSocket(n1.getPort());
+            //n1.setIP("localhost");
+
+        } catch (Exception e) {
+            //n1.echo("Enter the arguments as `java Node <node name> <ip address> <port>");
+        }
+        
+
+        mainThread = new Thread(n1);
+        stdReadThread = new Thread(new Runnable() {
+            public void run() {
+                System.out.println("std listener started...");
+                n1.readStdin();
+            }
+        });
+
+        Thread listnerThread = new Thread(new Runnable() { //thread which listens on the joining
+
+            public void run() {
+                System.out.println("** join listener on port " + n1.getPort() + " started..");
+                n1.joinListener();
+            }
+        });
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {     //unregister on ctrl+c or exit
+            public void run() {
+                n1.unreg();
+            }
+        });
+
+        mainThread.start();
+        stdReadThread.start();
+        listnerThread.start();
+    }
+
     public void run() {
         try {
             startNode();
@@ -408,27 +462,49 @@ public class Node implements Runnable {
                 } else if (outMessage.contains("ser")) {
                     String searchQuery = outMessage.split(" ")[1];
 
-                    echo("ser caught****");
-                    //select random node from neighbours
-                    Random r = new Random();
-                    Neighbour randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
+                    int totalResults = 0;
+                    ArrayList<String> searchResults = new ArrayList<String>();
 
-                    //send search message to picked neighbour
-                    String searchCommand = " SER " + ip_address + " " + node_port + " " + searchQuery + " " + maxHops;
-                    searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
-                    sendMessage(searchCommand, randomSuccessor.getIp(), String.valueOf(randomSuccessor.getPort()));
+                    for (String fileNames : filesToStore.keySet()) {
+                        System.out.println(fileNames+" "+searchQuery);
+                        if (fileNames.contains(searchQuery)) {
+                            totalResults++;
+                            searchResults.add(fileNames);
+                        }
+                    }
+
+                    //sending search results to originator
+                    if(totalResults == 0) {
+
+                        //select random node from neighbours
+                        Random r = new Random();
+                        Neighbour randomSuccessor = joinedNodes.get(r.nextInt(joinedNodes.size()));
+
+                        //send search message to picked neighbour
+                        String searchCommand = " SER " + ip_address + " " + node_port + " " + searchQuery + " " + maxHops;
+                        searchCommand = "00" + (searchCommand.length() + 4) + searchCommand;
+                        sendMessage(searchCommand, randomSuccessor.getIp(), String.valueOf(randomSuccessor.getPort()));
+                    } else {
+                        System.out.println("File found in my PC!!!");
+                    }
+
+                } else if (outMessage.contains("nodes")) {
+                    for(int i=0;i<joinedNodes.size();i++){
+                        System.out.println(joinedNodes.get(i));
+                    }
 
                 } else {
                     echo("Enter valid command");
                 }
-            } catch (Exception e) {
+            }
+        } catch (Exception e) {
 
             }
         }
 
     }
 
-    public void startNode() throws Exception { //node initializer
+    public void startNode() throws Exception {
         try {
             // String last_port=readPort();
             // echo(last_port);
